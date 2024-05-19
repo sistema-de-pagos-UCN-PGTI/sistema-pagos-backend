@@ -11,6 +11,7 @@ export class UserController {
 
     constructor(private userService: UserService) { }
 
+    @hasRoles('admin')
     @Post()
     create(@Body() user: User): Observable<User | Object>{
         return this.userService.create(user).pipe(
@@ -29,25 +30,27 @@ export class UserController {
         );
     }
 
-    @hasRoles('admin')
+    @hasRoles('user')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Get(':userid')
     findOne(@Param() params): Observable<User> {
         return this.userService.findOne(params.userid);
     }
 
-    @hasRoles('user')
+    @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Get()
     findAll(): Observable<User[]> {
         return this.userService.findAll();
     }
 
+    @hasRoles('admin')
     @Delete(':userid')
     deleteOne(@Param('userid') userid: string): Observable<User> {
         return this.userService.deleteOne(Number(userid));
     }
 
+    @hasRoles('admin', 'user')
     @Put(':userid')
     updateOne(@Param('userid') userid: string, @Body() user: User): Observable<any> {
         return this.userService.updateOne(Number(userid), user);
