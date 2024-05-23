@@ -5,6 +5,7 @@ import { User} from './models/user.interface';
 import { Users } from './models/user.entity';
 import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { AuthService } from 'src/auth/auth.service';
+import { ChangePassword } from './models/changePassword.interface';
 
 @Injectable()
 export class UserService {
@@ -101,5 +102,28 @@ export class UserService {
 
     findByEmail(email: string): Observable<User> {
         return from(this.userRepository.findOne({where: {email: email}}));
+    }
+
+    //update password, validate that the password is correct and update it
+    updatePassword(id: number, changePasswordInput: ChangePassword): Observable<object> {
+        return this.validateUser(changePasswordInput.email, changePasswordInput.oldPassword).pipe(
+            switchMap((user: User) => {
+                if(user) {
+                    return this.authService.hashPassword(changePasswordInput.newPassword).pipe(
+                        switchMap((passwordHash: string) => {
+                            user.hashedpassword = passwordHash;
+                            //update and return a succes message
+                            return from(this.userRepository.update(id, user)).pipe(
+                                map(() => {
+                                    return {message: 'password updated'};
+                                })
+                            )
+                        })
+                    )
+                } else {
+                    throw Error;
+                }
+            })
+        )
     }
 }

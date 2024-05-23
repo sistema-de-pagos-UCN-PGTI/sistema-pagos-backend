@@ -5,6 +5,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { ChangePassword } from './models/changePassword.interface';
 
 @Controller('user')
 export class UserController {
@@ -54,6 +55,19 @@ export class UserController {
     @Put(':userid')
     updateOne(@Param('userid') userid: string, @Body() user: User): Observable<any> {
         return this.userService.updateOne(Number(userid), user);
+    }
+
+    //@hasRoles('admin', 'user')
+    //@UseGuards(JwtAuthGuard, RolesGuard)
+    //TODO CAMBIAR USERID POR URL A EXTRAER DE TOKEN
+    @Put('password/:userid')
+    updatePassword(@Param('userid') userid: string, @Body() changePasswordInput: ChangePassword): Observable<Object> {
+        return this.userService.updatePassword(Number(userid), changePasswordInput).pipe(
+            map((res: Object) => {
+                return res;
+            }),
+            catchError(err => of({error: "Incorrect password"}))
+        );
     }
 
 }
