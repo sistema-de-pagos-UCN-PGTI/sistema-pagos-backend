@@ -39,20 +39,25 @@ export class Users {
     inverseJoinColumn: { name: 'rolid', referencedColumnName: 'roleid' },
   })
   role: Roles[];
-  @OneToMany(() => Transaction, (transaction) => transaction.remittentdid)
+
+  @OneToMany(() => Transaction, (transaction) => transaction.remittent)
   remitedTransactions: Transaction[];
-  @OneToMany(() => Transaction, (transaction) => transaction.destinataryid)
+
+  @OneToMany(() => Transaction, (transaction) => transaction.destinatary)
   receivedTransactions: Transaction[];
-  @ManyToOne(
+
+  @OneToMany(
     () => SubscriptionPlan,
-    (subscriptionPlan) => subscriptionPlan.remittentid,
+    (subscriptionPlan) => subscriptionPlan.remittent,
   )
   remitedSubscription: SubscriptionPlan[];
-  @ManyToOne(
+
+  @OneToMany(
     () => SubscriptionPlan,
-    (subscriptionPlan) => subscriptionPlan.destinataryid,
+    (subscriptionPlan) => subscriptionPlan.destinatary,
   )
   receivedSubscription: SubscriptionPlan[];
+
   @BeforeInsert()
   emailToLowerCase() {
     this.email = this.email.toLowerCase();
