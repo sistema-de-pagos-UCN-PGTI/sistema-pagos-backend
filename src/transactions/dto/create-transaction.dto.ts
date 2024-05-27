@@ -12,12 +12,13 @@ export class CreateTransactionDto {
   @IsEmail()
   destinataryEmail: string;
   @IsString()
+  @MinLength(2)
   projectName: string;
   @IsString()
   description: string;
   @IsString()
   @MinLength(2)
-  paymentMethod: string;
+  paymentMethodName: string;
   @IsNumber()
   amount: number;
   @IsDate()

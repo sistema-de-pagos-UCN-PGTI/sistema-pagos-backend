@@ -6,6 +6,7 @@ import { Transaction } from './entities/transaction.entity';
 import { UserModule } from 'src/user/user.module';
 import { ProjectsModule } from 'src/projects/projects.module';
 import { PaymentMethodModule } from 'src/payment-method/payment-method.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PaymentMethodModule } from 'src/payment-method/payment-method.module';
     UserModule,
     ProjectsModule,
     PaymentMethodModule,
+    AuthModule,
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService],
