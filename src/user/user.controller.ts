@@ -59,17 +59,21 @@ export class UserController {
     return this.userService.deleteOne(Number(userid));
   }
 
-    //@hasRoles('admin', 'user')
-    //@UseGuards(JwtAuthGuard, RolesGuard)
-    //TODO CAMBIAR USERID POR URL A EXTRAER DE TOKEN
-    @Put('password/:userid')
-    updatePassword(@Param('userid') userid: string, @Body() changePasswordInput: ChangePassword): Observable<Object> {
-        return this.userService.updatePassword(Number(userid), changePasswordInput).pipe(
-            map((res: Object) => {
-                return res;
-            }),
-            catchError(err => of({error: "Incorrect password"}))
-        );
-    }
-
+  //@hasRoles('admin', 'user')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //TODO CAMBIAR USERID POR URL A EXTRAER DE TOKEN
+  @Put('password/:userid')
+  updatePassword(
+    @Param('userid') userid: string,
+    @Body() changePasswordInput: ChangePassword,
+  ): Observable<Object> {
+    return this.userService
+      .updatePassword(Number(userid), changePasswordInput)
+      .pipe(
+        map((res: Object) => {
+          return res;
+        }),
+        catchError((err) => of({ error: 'Incorrect password' })),
+      );
+  }
 }

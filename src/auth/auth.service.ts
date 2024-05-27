@@ -22,4 +22,7 @@ export class AuthService {
   ): Observable<any | boolean> {
     return from(bcrypt.compare(newPassword, passwordHash));
   }
+  decodeJWT(token: string): Observable<any> {
+    return from(this.jwtService.verifyAsync(token));
+  }
 }
