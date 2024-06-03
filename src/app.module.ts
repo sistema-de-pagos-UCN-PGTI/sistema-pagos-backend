@@ -14,6 +14,7 @@ import { PaymentMethod } from './payment-method/entities/paymentMethod.entity';
 import { SubscriptionPlan } from './entities/suscriptionPlans.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PaymentMethodModule } from './payment-method/payment-method.module';
     TransactionsModule,
     ProjectsModule,
     PaymentMethodModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
