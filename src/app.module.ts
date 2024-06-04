@@ -16,6 +16,7 @@ import { PaymentMethodModule } from './payment-method/payment-method.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { SubscriptionPlan } from './subscription/entities/subcriptionPlans.entity';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     TransactionsModule,
     ProjectsModule,
     PaymentMethodModule,
+    DashboardModule,
     SubscriptionModule,
   ],
   controllers: [AppController],
