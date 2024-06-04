@@ -15,12 +15,13 @@ import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { ChangePassword } from './models/changePassword.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @hasRoles('admin')
+  //@hasRoles('admin')
   @Post()
   create(@Body() user: User): Observable<User | Object> {
     return this.userService.create(user).pipe(
@@ -31,6 +32,7 @@ export class UserController {
 
   @Post('login')
   login(@Body() user: User): Observable<Object> {
+    console.log(process.env.JWT_SECRET);
     return this.userService.login(user).pipe(
       map((jwt: string) => {
         return { access_token: jwt };

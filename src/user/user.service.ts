@@ -109,7 +109,9 @@ export class UserService {
   }
 
     findByEmail(email: string): Observable<User> {
-        return from(this.userRepository.findOne({where: {email: email}}));
+        return from(this.userRepository.findOne({
+          where: {email: email},
+          relations: ['role'],}));
     }
 
     //update password, validate that the password is correct and update it
@@ -133,5 +135,9 @@ export class UserService {
                 }
             })
         )
+    }
+
+    decodeToken(token: string): Observable<any> {
+        return this.authService.decodeJWT(token);
     }
 }
