@@ -26,30 +26,36 @@ export class DashboardController {
         return this.dashboardService.getAllUsers();
     }
 
-    //@hasRoles('admin')
-    //@UseGuards(JwtAuthGuard, RolesGuard)
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTotalAmount')
     getTotalAmount(): Observable<number>{
         return this.dashboardService.getTotalAmount();
     }
 
-    //@hasRoles('admin')
-    //@UseGuards(JwtAuthGuard, RolesGuard)
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTopUsers')
     getTopUsers(): Observable<UserWithTransactionCount[]>{
         return this.dashboardService.getTopUsers();
     }
 
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTopProjectTransaction')
     getTopProjectAmount(): Observable<any>{
         return this.dashboardService.getProjectWithMostTransactions();
     }
 
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTopProjectAmount')
     getTopProjectTransaction(): Observable<any>{
         return this.dashboardService.getProjectWithMostAmount();
     }
 
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTransactionCountPerDay')
     getTransactionCountPerDay(): Observable<any>{
         return this.dashboardService.getTransactionCountPerDay();
