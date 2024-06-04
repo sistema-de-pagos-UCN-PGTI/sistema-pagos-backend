@@ -7,10 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable, from, map } from 'rxjs';
 import { SubscriptionService } from '../subscription.service';
-import { SubscriptionPlan } from '../entities/subcriptionPlans.entity';
-import { error } from 'console';
-import { User } from 'src/user/models/user.interface';
-
+@Injectable()
 export class CheckSubscriptionGuard implements CanActivate {
   constructor(private subscriptionService: SubscriptionService) {}
 
@@ -19,28 +16,15 @@ export class CheckSubscriptionGuard implements CanActivate {
   ): boolean | Promise<boolean> | Observable<boolean> {
     const req = context.switchToHttp().getRequest();
     const subscriptionPlanId: number = +req.params.subscriptionplanid;
-
     return this.subscriptionService.findOne(subscriptionPlanId).pipe(
-      map((subscription) => {
-        if (subscription) {
-          const tokenUser: User = req.user;
-          if (tokenUser.userid !== subscription.remittent.userid) {
-            throw new HttpException(
-              {
-                message: 'Subscription Doesn´t belong to the user',
-              },
-              HttpStatus.FORBIDDEN,
-            );
-          }
+      map((subscriptionPlan) => {
+        if (subscriptionPlan) {
           return true;
-        } else {
-          throw new HttpException(
-            {
-              message: 'Subscription Doesn´t Exist',
-            },
-            HttpStatus.BAD_REQUEST,
-          );
         }
+        throw new HttpException(
+          'Subscription plan not found',
+          HttpStatus.NOT_FOUND,
+        );
       }),
     );
   }

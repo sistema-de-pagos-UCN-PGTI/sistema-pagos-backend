@@ -10,6 +10,7 @@ import {
   Req,
   Request,
   UseInterceptors,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -18,7 +19,6 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { ValidTransactionsReferencesDto } from './dto/valid-transactions-references.dto';
-import { TestGuard } from './guards/test.guard';
 import { TestInterceptor } from './interceptors/test.interceptor';
 import { ValidateTransactionReferencesGuard } from './guards/ValidateReference.guard';
 import { ValidReferencesDto } from './dto/valid-references.dto';
@@ -69,9 +69,10 @@ export class TransactionsController {
   ) {
     return this.transactionsService.update(+id, updateTransactionDto);
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.transactionsService.remove(+id);
+  @hasRoles('user', 'admin')
+  @Delete(':transactionId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  remove(@Param('transactionId', ParseIntPipe) transactionId: number) {
+    return this.transactionsService.remove(+transactionId);
   }
 }

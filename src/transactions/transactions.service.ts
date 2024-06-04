@@ -154,10 +154,29 @@ export class TransactionsService {
       }),
     );
   }
-  findOne(id: number) {
-    return `This action returns a #${id} transaction`;
-  }
+  findOne(transactionId: number): Observable<Transaction> {
+    return from(
+      this.transactionRepository.findOne({
+        where: { transactionid: transactionId },
+        relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
+      }),
+    ).pipe(
+      map((subscription) => {
+        if (subscription) {
+          const { remittent, destinatary, ...rest } = subscription;
 
+          if (remittent) {
+            delete remittent.hashedpassword;
+          }
+          if (destinatary) {
+            delete destinatary.hashedpassword;
+          }
+          return { ...rest, remittent, destinatary } as Transaction;
+        }
+        return null;
+      }),
+    );
+  }
   update(id: number, updateTransactionDto: UpdateTransactionDto) {
     return `This action updates a #${id} transaction`;
   }

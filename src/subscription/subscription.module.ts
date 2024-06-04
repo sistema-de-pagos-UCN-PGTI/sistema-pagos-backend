@@ -8,6 +8,7 @@ import { PaymentMethodModule } from 'src/payment-method/payment-method.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionPlan } from './entities/subcriptionPlans.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { CheckSubscriptionGuard } from './guards/check-subscription.guard';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Transaction } from 'src/transactions/entities/transaction.entity';
     PaymentMethodModule,
   ],
   controllers: [SubscriptionController],
-  providers: [SubscriptionService],
+  providers: [SubscriptionService, CheckSubscriptionGuard],
 })
 export class SubscriptionModule {}
 //TODO -> reparar problema sobre las validaciones de los dto(repeticióin de código)

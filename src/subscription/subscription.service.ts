@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -6,7 +10,15 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { SubscriptionPlan } from './entities/subcriptionPlans.entity';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { ValidTransactionsReferencesDto } from 'src/transactions/dto/valid-transactions-references.dto';
-import { Observable, from, map, mergeMap, switchMap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  from,
+  map,
+  mergeMap,
+  switchMap,
+  throwError,
+} from 'rxjs';
 import { ValidSubscriptionReferencesDto } from './dto/valid-references.dto';
 import { User } from 'src/user/models/user.interface';
 import { error } from 'console';
@@ -33,7 +45,6 @@ export class SubscriptionService {
       periodicity: createSubscription.periodicity,
       status: createSubscription.status,
     };
-    console.log(newSubscription.paymentmethod, 'en service ');
     return from(this.subscriptionRepository.save(newSubscription)).pipe(
       map((savedSubscription) => {
         // Eliminar propiedades hashedpassword
@@ -172,6 +183,7 @@ export class SubscriptionService {
       map((subscription) => {
         if (subscription) {
           const { remittent, destinatary, ...rest } = subscription;
+
           if (remittent) {
             delete remittent.hashedpassword;
           }
@@ -184,8 +196,35 @@ export class SubscriptionService {
       }),
     );
   }
-  update(id: number, updateSubscriptionDto: UpdateSubscriptionDto) {
-    return `This action updates a #${id} subscription`;
+  update(
+    subscriptionplanid: number,
+    updateSubscriptionDto: UpdateSubscriptionDto,
+  ): Observable<SubscriptionPlan> {
+    if (updateSubscriptionDto.hasOwnProperty('remittentEmail')) {
+      return throwError(
+        () =>
+          new BadRequestException(
+            'Modification of remittentEmail is not allowed',
+          ),
+      );
+    }
+
+    return from(
+      this.subscriptionRepository.findOne({
+        where: { subscriptionplanid },
+      }),
+    ).pipe(
+      switchMap((subscription) => {
+        // if (!subscription) {
+        //   return throwError(
+        //     () => new NotFoundException('Subscription not found'),
+        //   );
+        // }
+        Object.assign(subscription, updateSubscriptionDto);
+        return from(this.subscriptionRepository.save(subscription));
+      }),
+      catchError((error) => throwError(() => error)),
+    );
   }
 
   remove(subscriptionplanid: number) {
