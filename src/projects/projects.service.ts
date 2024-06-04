@@ -27,7 +27,7 @@ export class ProjectsService {
   }
 
   findAll() {
-    return `This action returns all projects`;
+    return from(this.projectRepository.find());
   }
 
   findOne(id: number) {

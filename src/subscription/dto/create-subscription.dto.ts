@@ -6,7 +6,8 @@ import {
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-export class CreateTransactionDto {
+import { IsValidPeriodicity } from '../decorators/periodicitydto.decorator';
+export class CreateSubscriptionDto {
   @IsEmail()
   remittentEmail: string;
   @IsEmail()
@@ -24,7 +25,9 @@ export class CreateTransactionDto {
   @IsDate()
   @Transform(({ value }) => new Date(value))
   date: Date;
+  @MinLength(4)
   @IsString()
-  @MinLength(1)
   status: string;
+  @IsValidPeriodicity()
+  periodicity: string;
 }

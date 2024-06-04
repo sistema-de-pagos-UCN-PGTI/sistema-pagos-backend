@@ -6,6 +6,10 @@ import { Transaction } from './entities/transaction.entity';
 import { UserModule } from 'src/user/user.module';
 import { ProjectsModule } from 'src/projects/projects.module';
 import { PaymentMethodModule } from 'src/payment-method/payment-method.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { UserService } from 'src/user/user.service';
+import { ProjectsService } from 'src/projects/projects.service';
+import { PaymentMethodService } from 'src/payment-method/payment-method.service';
 
 @Module({
   imports: [
@@ -13,8 +17,10 @@ import { PaymentMethodModule } from 'src/payment-method/payment-method.module';
     UserModule,
     ProjectsModule,
     PaymentMethodModule,
+    AuthModule,
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService],
+  exports: [TransactionsService],
 })
 export class TransactionsModule {}

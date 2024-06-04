@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Roles } from '../../roles/models/role.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { SubscriptionPlan } from 'src/entities/suscriptionPlans.entity';
+import { SubscriptionPlan } from 'src/subscription/entities/subcriptionPlans.entity';
 
 @Entity()
 export class Users {
