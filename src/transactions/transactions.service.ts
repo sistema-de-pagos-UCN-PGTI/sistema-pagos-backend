@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,26 +6,15 @@ import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/models/user.interface';
-import {
-  Observable,
-  catchError,
-  forkJoin,
-  from,
-  map,
-  of,
-  switchMap,
-  throwError,
-  toArray,
-} from 'rxjs';
+import { Observable, forkJoin, from, map, switchMap } from 'rxjs';
 import { Project } from 'src/projects/entities/project.entity';
 import { ProjectsService } from 'src/projects/projects.service';
 import { PaymentMethodService } from 'src/payment-method/payment-method.service';
 import { PaymentMethod } from '../payment-method/entities/paymentMethod.entity';
-import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
-import { Users } from 'src/user/models/user.entity';
 import { UserTransactions } from './dto/user-transactions.dto';
-import { ValidTransactionsReferencesDto } from './dto/valid-references.dto';
+import { ValidTransactionsReferencesDto } from './dto/valid-transactions-references.dto';
+import { ValidReferencesDto } from './dto/valid-references.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -43,7 +32,7 @@ export class TransactionsService {
     const newTransaction = {
       remittent: createTransaction.remittentUser,
       destinatary: createTransaction.destinataryUser,
-      project: createTransaction.projec,
+      project: createTransaction.project,
       paymentMethod: createTransaction.paymenMethod,
       description: createTransaction.description,
       amount: createTransaction.amount,
@@ -97,7 +86,74 @@ export class TransactionsService {
       }),
     );
   }
+  checkReferences(
+    remittentEmail: string,
+    destinataryEmail,
+    projectName: string,
+    paymentMethodName: string,
+  ): Observable<ValidReferencesDto> {
+    const remittentUser$: Observable<User> = from(
+      this.userService.findByEmail(remittentEmail),
+    );
 
+    const destinataryUser$: Observable<User> = from(
+      this.userService.findByEmail(destinataryEmail),
+    );
+
+    const project$: Observable<Project> = from(
+      this.projectService.finOneByName(projectName),
+    );
+
+    const paymentMethod$: Observable<PaymentMethod> = from(
+      this.paymentMethodService.findOneByName(paymentMethodName),
+    );
+
+    return forkJoin([
+      remittentUser$,
+      destinataryUser$,
+      project$,
+      paymentMethod$,
+    ]).pipe(
+      map(([remittentUser, destinataryUser, project, paymentMethod]) => {
+        const observables = [
+          [remittentUser, remittentEmail],
+          [destinataryUser, destinataryEmail],
+          [project, projectName],
+          [paymentMethod, paymentMethodName],
+        ];
+        const errorMessages = observables.reduce(
+          (messages, [observable, data]) => {
+            if (!observable) {
+              messages.push(`${data} not found`);
+            }
+            return messages;
+          },
+          [],
+        );
+
+        if (errorMessages.length > 0) {
+          throw new HttpException(
+            { message: errorMessages },
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        if (remittentUser) {
+          delete remittentUser.hashedpassword;
+        }
+        if (destinataryUser) {
+          delete destinataryUser.hashedpassword;
+        }
+
+        const validatedReferences: ValidReferencesDto = {
+          remittentUser,
+          destinataryUser,
+          project,
+          paymentMethod,
+        };
+        return validatedReferences;
+      }),
+    );
+  }
   findOne(id: number) {
     return `This action returns a #${id} transaction`;
   }

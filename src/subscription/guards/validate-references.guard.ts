@@ -1,34 +1,33 @@
 import {
+  BadRequestException,
   CanActivate,
   ExecutionContext,
-  Injectable,
   HttpException,
   HttpStatus,
-  BadRequestException,
+  Injectable,
 } from '@nestjs/common';
-import { Observable, catchError, from, map, mergeMap, of } from 'rxjs';
-import { CreateTransactionDto } from '../dto/create-transaction.dto';
-import { User } from 'src/user/models/user.interface';
-import { ValidReferencesDto } from '../dto/valid-references.dto';
-import { TransactionsService } from '../transactions.service';
-import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
+import { Observable, catchError, from, map, mergeMap } from 'rxjs';
+import { ValidReferencesDto } from 'src/transactions/dto/valid-references.dto';
+import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
+import { plainToClass } from 'class-transformer';
+import { User } from 'src/user/models/user.interface';
+import { TransactionsService } from 'src/transactions/transactions.service';
 
 @Injectable()
-export class ValidateTransactionReferencesGuard implements CanActivate {
+export class ValidateReferencesGuard implements CanActivate {
   constructor(private transactionService: TransactionsService) {}
-
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
-    const createTransaction: CreateTransactionDto = request.body;
-    if (!createTransaction) {
-      return true; // Allow the request to proceed if there's no transaction data
+    const createSubscription: CreateSubscriptionDto = request.body;
+    if (!createSubscription) {
+      return true;
     }
     const tokenUser: User = request.user.user;
 
-    const dtoInstance = plainToClass(CreateTransactionDto, createTransaction);
+    const dtoInstance = plainToClass(CreateSubscriptionDto, createSubscription);
     const validation$ = from(validate(dtoInstance)).pipe(
       mergeMap((errors) => {
         if (errors.length > 0) {
@@ -43,10 +42,10 @@ export class ValidateTransactionReferencesGuard implements CanActivate {
           });
         }
         return this.transactionService.checkReferences(
-          createTransaction.remittentEmail,
-          createTransaction.destinataryEmail,
-          createTransaction.projectName,
-          createTransaction.paymentMethodName,
+          createSubscription.remittentEmail,
+          createSubscription.destinataryEmail,
+          createSubscription.projectName,
+          createSubscription.paymentMethodName,
         );
       }),
       map((validatedReferences: ValidReferencesDto) => {

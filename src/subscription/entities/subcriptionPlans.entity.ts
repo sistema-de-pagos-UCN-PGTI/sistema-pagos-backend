@@ -7,14 +7,14 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Project } from '../projects/entities/project.entity';
-import { PaymentMethod } from '../payment-method/entities/paymentMethod.entity';
 import { User } from 'src/user/models/user.interface';
+import { Project } from 'src/projects/entities/project.entity';
+import { PaymentMethod } from 'src/payment-method/entities/paymentMethod.entity';
 
 @Entity('subscription_plans')
 export class SubscriptionPlan {
   @PrimaryGeneratedColumn()
-  susbscriptionplanid: number;
+  subscriptionplanid: number;
 
   @Column({ type: 'text' })
   description: string;
@@ -25,8 +25,17 @@ export class SubscriptionPlan {
   @Column({ nullable: false, type: 'timestamp with time zone' })
   startdate: Date;
 
+  @Column({ type: 'varchar', length: 24 })
+  periodicity: string;
+
+  @Column({ type: 'varchar', length: 24 })
+  status: string;
+
+  @Column({ type: 'date', nullable: true })
+  lastpaydate: Date;
+
   @ManyToOne(() => Users, (user) => user.remitedSubscription)
-  @JoinColumn({ name: 'remittentid' })
+  @JoinColumn({ name: 'remittenttid' })
   remittent: User;
 
   @ManyToOne(() => Users, (user) => user.receivedSubscription)
@@ -34,11 +43,8 @@ export class SubscriptionPlan {
   destinatary: User;
 
   @ManyToOne(() => Project, (project) => project.subscriptionPlans)
-  @JoinColumn({ name: 'projetid' })
+  @JoinColumn({ name: 'projectid' })
   project: Project;
-
-  @Column({ type: 'bool', nullable: false, default: false })
-  status: boolean;
 
   @ManyToOne(
     () => PaymentMethod,
@@ -46,7 +52,4 @@ export class SubscriptionPlan {
   )
   @JoinColumn({ name: 'paymentmethodid' })
   paymentmethod: PaymentMethod;
-
-  @Column({ type: 'varchar', length: 24 })
-  periodicity: string;
 }
