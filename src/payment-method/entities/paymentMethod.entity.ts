@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { SubscriptionPlan } from '../../entities/suscriptionPlans.entity';
+
 import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { SubscriptionPlan } from 'src/subscription/entities/subcriptionPlans.entity';
 
 @Entity('payment_methods')
 export class PaymentMethod {

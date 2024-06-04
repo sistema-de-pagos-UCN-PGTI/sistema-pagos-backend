@@ -13,7 +13,6 @@ export class PaymentMethodService {
     private readonly paymentMethodRepository: Repository<PaymentMethod>,
   ) {}
   findOneByName(paymentMethodName: string): Observable<PaymentMethod> {
-    console.log(paymentMethodName, 'finOnebyna');
     return from(
       this.paymentMethodRepository.findOne({
         where: { name: paymentMethodName },

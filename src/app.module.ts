@@ -11,9 +11,11 @@ import { Users } from './user/models/user.entity';
 import { Transaction } from './transactions/entities/transaction.entity';
 import { Project } from './projects/entities/project.entity';
 import { PaymentMethod } from './payment-method/entities/paymentMethod.entity';
-import { SubscriptionPlan } from './entities/suscriptionPlans.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { SubscriptionPlan } from './subscription/entities/subcriptionPlans.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -30,12 +32,14 @@ import { PaymentMethodModule } from './payment-method/payment-method.module';
       useUTC: true,
       entities: [Users, Transaction, Project, PaymentMethod, SubscriptionPlan],
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     UserModule,
     RolesModule,
     TransactionsModule,
     ProjectsModule,
     PaymentMethodModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
