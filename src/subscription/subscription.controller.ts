@@ -21,6 +21,7 @@ import { ValidReferencesDto } from 'src/transactions/dto/valid-references.dto';
 import { ValidSubscriptionReferencesDto } from './dto/valid-references.dto';
 import { CheckSubscriptionGuard } from './guards/check-subscription.guard';
 import { User } from 'src/user/models/user.interface';
+import { ValidateSubscriptionProprietaryGuard } from './guards/validate-subscription-proprietary.guard';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -58,19 +59,27 @@ export class SubscriptionController {
   findOne(@Param('id') id: string) {
     return this.subscriptionService.findOne(+id);
   }
-
-  @Patch(':id')
+  @hasRoles('user')
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+    CheckSubscriptionGuard,
+    ValidateSubscriptionProprietaryGuard,
+  )
+  @Patch(':subscriptionplanid')
   update(
-    @Param('id') id: string,
+    @Param('subscriptionplanid', ParseIntPipe) subscriptionplanid: number,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
   ) {
-    return this.subscriptionService.update(+id, updateSubscriptionDto);
+    return this.subscriptionService.update(
+      +subscriptionplanid,
+      updateSubscriptionDto,
+    );
   }
   @hasRoles('user')
   @Delete(':subscriptionplanid')
   @UseGuards(JwtAuthGuard, RolesGuard, CheckSubscriptionGuard)
   remove(@Param('subscriptionplanid', ParseIntPipe) id: number) {
-    console.log('paso');
-    // return this.subscriptionService.remove(+id);
+    return this.subscriptionService.remove(+id);
   }
 }
