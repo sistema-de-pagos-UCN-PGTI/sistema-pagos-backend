@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,7 +12,15 @@ import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/models/user.interface';
-import { Observable, forkJoin, from, map, switchMap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  forkJoin,
+  from,
+  map,
+  switchMap,
+  throwError,
+} from 'rxjs';
 import { Project } from 'src/projects/entities/project.entity';
 import { ProjectsService } from 'src/projects/projects.service';
 import { PaymentMethodService } from 'src/payment-method/payment-method.service';
@@ -158,12 +172,12 @@ export class TransactionsService {
     return from(
       this.transactionRepository.findOne({
         where: { transactionid: transactionId },
-        relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
+        relations: ['remittent', 'destinatary', 'project', 'paymentMethod'],
       }),
     ).pipe(
-      map((subscription) => {
-        if (subscription) {
-          const { remittent, destinatary, ...rest } = subscription;
+      map((transaction) => {
+        if (transaction) {
+          const { remittent, destinatary, ...rest } = transaction;
 
           if (remittent) {
             delete remittent.hashedpassword;
@@ -177,11 +191,61 @@ export class TransactionsService {
       }),
     );
   }
-  update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    return `This action updates a #${id} transaction`;
+  async finAll() {
+    const transactions = await this.transactionRepository.find({
+      relations: ['remittent', 'destinatary', 'project', 'paymentMethod'],
+    });
+    return transactions.map((transaction) => {
+      const { remittent, destinatary, ...rest } = transaction;
+      if (remittent) {
+        delete remittent.hashedpassword;
+      }
+      if (destinatary) {
+        delete destinatary.hashedpassword;
+      }
+      return { ...rest, remittent, destinatary };
+    });
+  }
+  update(
+    userId: number,
+    transactionid: number,
+    updateSubscriptionDto: UpdateTransactionDto,
+  ): Observable<Transaction> {
+    return this.userService.findOne(userId).pipe(
+      switchMap((user: User) => {
+        if (
+          !user.role.some((role) => role.name === 'admin') &&
+          updateSubscriptionDto.hasOwnProperty('remittentEmail')
+        ) {
+          return throwError(
+            () =>
+              new BadRequestException(
+                'Modification of remittentEmail is not allowed',
+              ),
+          );
+        }
+
+        return from(
+          this.transactionRepository.findOne({
+            where: { transactionid },
+          }),
+        ).pipe(
+          switchMap((transaction) => {
+            if (!transaction) {
+              return throwError(
+                () => new NotFoundException('Transaction not found'),
+              );
+            }
+            Object.assign(transaction, updateSubscriptionDto);
+            return from(this.transactionRepository.save(transaction));
+          }),
+          catchError((error) => throwError(() => error)),
+        );
+      }),
+    );
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} transaction`;
+  remove(transactionid: number) {
+    return from(this.transactionRepository.delete({ transactionid }));
   }
 }

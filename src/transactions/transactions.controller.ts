@@ -22,13 +22,21 @@ import { ValidTransactionsReferencesDto } from './dto/valid-transactions-referen
 import { TestInterceptor } from './interceptors/test.interceptor';
 import { ValidateTransactionReferencesGuard } from './guards/ValidateReference.guard';
 import { ValidReferencesDto } from './dto/valid-references.dto';
+import { ValidateTransactionProprietaryGuard } from './guards/validate-transaction-propertary.guard';
+import { User } from 'src/user/models/user.interface';
+import { UserService } from 'src/user/user.service';
+import { Role } from 'src/roles/models/role.interface';
+import { firstValueFrom } from 'rxjs';
 
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post()
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionReferencesGuard)
   create(@Request() req, @Body() createTransactionDto: CreateTransactionDto) {
     const validReferences: ValidReferencesDto = req.validatedReferences;
@@ -42,17 +50,33 @@ export class TransactionsController {
       project: validReferences.project,
       paymenMethod: validReferences.paymentMethod,
     };
-    console.log(validReferences);
     return this.transactionsService.create(validTransaction);
   }
 
   @Get()
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  findAll(@Req() req: Request) {
+  async findAll(@Req() req) {
+    const tokenUser: User = req.user.user;
+
+    const user: User = await firstValueFrom(
+      this.userService.findOne(tokenUser.userid),
+    );
+
+    if (user.role.some((role: Role) => role.name === 'admin')) {
+      return this.transactionsService.finAll();
+    }
+
     const bearerToken: string = req.headers['authorization'];
     const token = bearerToken.split('Bearer')[1].trim();
+
     return this.transactionsService.findAllUserTransactions(token);
+  }
+  @hasRoles('user', 'admin')
+  @Delete(':transactionId')
+  @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
+  remove(@Param('transactionId', ParseIntPipe) transactionId: number) {
+    return this.transactionsService.remove(+transactionId);
   }
   //---------------------------
   @Get('test')
@@ -61,18 +85,19 @@ export class TransactionsController {
     console.log(body, 'en controlador');
     return;
   }
-
-  @Patch(':id')
+  @hasRoles('user', 'admin')
+  @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
+  @Patch(':transactionId')
   update(
-    @Param('id') id: string,
+    @Request() req,
+    @Param('transactionId', ParseIntPipe) transactionId: number,
     @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
-    return this.transactionsService.update(+id, updateTransactionDto);
-  }
-  @hasRoles('user', 'admin')
-  @Delete(':transactionId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  remove(@Param('transactionId', ParseIntPipe) transactionId: number) {
-    return this.transactionsService.remove(+transactionId);
+    const tokenUser: User = req.user.user;
+    return this.transactionsService.update(
+      tokenUser.userid,
+      +transactionId,
+      updateTransactionDto,
+    );
   }
 }

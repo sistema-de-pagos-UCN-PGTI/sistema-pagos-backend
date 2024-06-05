@@ -21,7 +21,7 @@ import {
 } from 'rxjs';
 import { ValidSubscriptionReferencesDto } from './dto/valid-references.dto';
 import { User } from 'src/user/models/user.interface';
-import { error } from 'console';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class SubscriptionService {
@@ -29,6 +29,7 @@ export class SubscriptionService {
     @InjectRepository(SubscriptionPlan)
     private readonly subscriptionRepository: Repository<SubscriptionPlan>,
     private transactionService: TransactionsService,
+    private userService: UserService,
   ) {}
   create(
     createSubscription: ValidSubscriptionReferencesDto,
@@ -152,8 +153,21 @@ export class SubscriptionService {
       map(() => undefined),
     );
   }
-  findAll() {
-    return this.subscriptionRepository.find();
+  async findAll() {
+    const subscriptions = await this.subscriptionRepository.find({
+      relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
+    });
+    // Remove hashedpassword from remittent and destinatary
+    return subscriptions.map((subscription) => {
+      const { remittent, destinatary, ...rest } = subscription;
+      if (remittent) {
+        delete remittent.hashedpassword;
+      }
+      if (destinatary) {
+        delete destinatary.hashedpassword;
+      }
+      return { ...rest, remittent, destinatary };
+    });
   }
   async findAllForUser(user: User) {
     const subscriptions = await this.subscriptionRepository.find({
@@ -197,33 +211,42 @@ export class SubscriptionService {
     );
   }
   update(
+    userId: number,
     subscriptionplanid: number,
     updateSubscriptionDto: UpdateSubscriptionDto,
   ): Observable<SubscriptionPlan> {
-    if (updateSubscriptionDto.hasOwnProperty('remittentEmail')) {
-      return throwError(
-        () =>
-          new BadRequestException(
-            'Modification of remittentEmail is not allowed',
-          ),
-      );
-    }
+    return this.userService.findOne(userId).pipe(
+      switchMap((user: User) => {
+        if (
+          !user.role.some((role) => role.name === 'admin') &&
+          updateSubscriptionDto.hasOwnProperty('remittentEmail')
+        ) {
+          return throwError(
+            () =>
+              new BadRequestException(
+                'Modification of remittentEmail is not allowed',
+              ),
+          );
+        }
 
-    return from(
-      this.subscriptionRepository.findOne({
-        where: { subscriptionplanid },
+        return from(
+          this.subscriptionRepository.findOne({
+            where: { subscriptionplanid },
+          }),
+        ).pipe(
+          switchMap((subscription) => {
+            if (!subscription) {
+              return throwError(
+                () => new NotFoundException('Subscription not found'),
+              );
+            }
+            Object.assign(subscription, updateSubscriptionDto);
+            console.log(subscription);
+            return from(this.subscriptionRepository.save(subscription));
+          }),
+          catchError((error) => throwError(() => error)),
+        );
       }),
-    ).pipe(
-      switchMap((subscription) => {
-        // if (!subscription) {
-        //   return throwError(
-        //     () => new NotFoundException('Subscription not found'),
-        //   );
-        // }
-        Object.assign(subscription, updateSubscriptionDto);
-        return from(this.subscriptionRepository.save(subscription));
-      }),
-      catchError((error) => throwError(() => error)),
     );
   }
 
