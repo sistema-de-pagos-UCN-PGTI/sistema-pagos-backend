@@ -45,3 +45,4 @@ import { ScheduleModule } from '@nestjs/schedule';
   providers: [AppService],
 })
 export class AppModule {}
+//arreglar updates de transactions y subscriptions -> no se pueden modificar los proyectos,métodos de pago y esas cosas y esas cosas

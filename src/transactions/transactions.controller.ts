@@ -26,6 +26,7 @@ import { ValidateTransactionProprietaryGuard } from './guards/validate-transacti
 import { User } from 'src/user/models/user.interface';
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
+import { firstValueFrom } from 'rxjs';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -35,7 +36,7 @@ export class TransactionsController {
   ) {}
 
   @Post()
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionReferencesGuard)
   create(@Request() req, @Body() createTransactionDto: CreateTransactionDto) {
     const validReferences: ValidReferencesDto = req.validatedReferences;
@@ -49,7 +50,6 @@ export class TransactionsController {
       project: validReferences.project,
       paymenMethod: validReferences.paymentMethod,
     };
-    console.log(validReferences);
     return this.transactionsService.create(validTransaction);
   }
 
@@ -58,14 +58,18 @@ export class TransactionsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   async findAll(@Req() req) {
     const tokenUser: User = req.user.user;
-    const user: User = await this.userService
-      .findOne(tokenUser.userid)
-      .toPromise();
+
+    const user: User = await firstValueFrom(
+      this.userService.findOne(tokenUser.userid),
+    );
+
     if (user.role.some((role: Role) => role.name === 'admin')) {
       return this.transactionsService.finAll();
     }
+
     const bearerToken: string = req.headers['authorization'];
     const token = bearerToken.split('Bearer')[1].trim();
+
     return this.transactionsService.findAllUserTransactions(token);
   }
   @hasRoles('user', 'admin')
@@ -81,12 +85,19 @@ export class TransactionsController {
     console.log(body, 'en controlador');
     return;
   }
-
-  @Patch(':id')
+  @hasRoles('user', 'admin')
+  @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
+  @Patch(':transactionId')
   update(
-    @Param('id') id: string,
+    @Request() req,
+    @Param('transactionId', ParseIntPipe) transactionId: number,
     @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
-    return this.transactionsService.update(+id, updateTransactionDto);
+    const tokenUser: User = req.user.user;
+    return this.transactionsService.update(
+      tokenUser.userid,
+      +transactionId,
+      updateTransactionDto,
+    );
   }
 }

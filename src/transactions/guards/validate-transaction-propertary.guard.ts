@@ -31,19 +31,18 @@ export class ValidateTransactionProprietaryGuard implements CanActivate {
           throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
 
-        if (user.role.some((role: Role) => role.name === 'admin')) {
-          return of(true);
-        }
-
         return this.transactionService.findOne(transactionId).pipe(
           switchMap((transaction) => {
+            console.log('transacción', transaction);
             if (!transaction) {
               throw new HttpException(
                 'Transaction not found',
                 HttpStatus.NOT_FOUND,
               );
             }
-
+            if (user.role.some((role: Role) => role.name === 'admin')) {
+              return of(true);
+            }
             if (transaction.remittent.userid !== user.userid) {
               throw new HttpException(
                 'Invalid Action, transaction doesn’t belong to the logged user',

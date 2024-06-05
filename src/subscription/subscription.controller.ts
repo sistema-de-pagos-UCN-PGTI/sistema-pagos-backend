@@ -9,6 +9,7 @@ import {
   Request,
   UseGuards,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
@@ -24,7 +25,7 @@ import { User } from 'src/user/models/user.interface';
 import { ValidateSubscriptionProprietaryGuard } from './guards/validate-subscription-proprietary.guard';
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -34,7 +35,7 @@ export class SubscriptionController {
   ) {}
 
   @Post()
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateReferencesGuard)
   create(@Request() req, @Body() createSubscriptionDto: CreateSubscriptionDto) {
     const validReferences: ValidReferencesDto = req.validatedReferences;
@@ -55,14 +56,17 @@ export class SubscriptionController {
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
-  async findAll(@Request() req) {
+  async findAll(@Req() req) {
     const tokenUser: User = req.user.user;
-    const user: User = await this.userService
-      .findOne(tokenUser.userid)
-      .toPromise();
+
+    const user: User = await firstValueFrom(
+      this.userService.findOne(tokenUser.userid),
+    );
+
     if (user.role.some((role: Role) => role.name === 'admin')) {
       return this.subscriptionService.findAll();
     }
+
     return this.subscriptionService.findAllForUser(tokenUser);
   }
 
@@ -79,10 +83,13 @@ export class SubscriptionController {
   )
   @Patch(':subscriptionplanid')
   update(
+    @Request() req,
     @Param('subscriptionplanid', ParseIntPipe) subscriptionplanid: number,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
   ) {
+    const tokenUser: User = req.user.user;
     return this.subscriptionService.update(
+      tokenUser.userid,
       +subscriptionplanid,
       updateSubscriptionDto,
     );
