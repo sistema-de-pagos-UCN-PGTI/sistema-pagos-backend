@@ -7,6 +7,7 @@ import {
   Delete,
   Put,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './models/user.interface';
@@ -37,6 +38,15 @@ export class UserController {
       }),
       catchError((err) => of({ error: 'Wrong credentials' })),
     );
+  }
+
+  @hasRoles('user', 'admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('role')
+  getRole(@Req() req: Request): Observable<Object> {
+    const bearerToken: string = req.headers['authorization'];
+    const token = bearerToken.split('Bearer')[1].trim();
+    return this.userService.getRole(token);
   }
 
   @hasRoles('user', 'admin')
@@ -76,4 +86,8 @@ export class UserController {
         catchError((err) => of({ error: 'Incorrect password' })),
       );
   }
+
+  
+
+
 }

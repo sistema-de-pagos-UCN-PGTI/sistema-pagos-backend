@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './models/user.interface';
 import { Users } from './models/user.entity';
-import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, find, from, map, switchMap, throwError } from 'rxjs';
 import { AuthService } from 'src/auth/auth.service';
 import { ChangePassword } from './models/changePassword.interface';
 
@@ -140,4 +140,14 @@ export class UserService {
     decodeToken(token: string): Observable<any> {
         return this.authService.decodeJWT(token);
     }
+
+    getRole(token: string): Observable<string> {
+        return this.decodeToken(token).pipe(
+            switchMap((decoded: any) => this.findByEmail(decoded.email)),
+            map((user: User) => {
+                return user.role[0].name;
+            })
+        )
+    }
+
 }
