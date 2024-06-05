@@ -6,7 +6,7 @@ import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/models/user.interface';
-import { Observable, forkJoin, from, map, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, from, map, switchMap } from 'rxjs';
 import { Project } from 'src/projects/entities/project.entity';
 import { ProjectsService } from 'src/projects/projects.service';
 import { PaymentMethodService } from 'src/payment-method/payment-method.service';
@@ -158,12 +158,12 @@ export class TransactionsService {
     return from(
       this.transactionRepository.findOne({
         where: { transactionid: transactionId },
-        relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
+        relations: ['remittent', 'destinatary', 'project', 'paymentMethod'],
       }),
     ).pipe(
-      map((subscription) => {
-        if (subscription) {
-          const { remittent, destinatary, ...rest } = subscription;
+      map((transaction) => {
+        if (transaction) {
+          const { remittent, destinatary, ...rest } = transaction;
 
           if (remittent) {
             delete remittent.hashedpassword;
@@ -176,6 +176,9 @@ export class TransactionsService {
         return null;
       }),
     );
+  }
+  finAll() {
+    return this.transactionRepository.find();
   }
   update(id: number, updateTransactionDto: UpdateTransactionDto) {
     return `This action updates a #${id} transaction`;

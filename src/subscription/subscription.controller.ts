@@ -22,10 +22,16 @@ import { ValidSubscriptionReferencesDto } from './dto/valid-references.dto';
 import { CheckSubscriptionGuard } from './guards/check-subscription.guard';
 import { User } from 'src/user/models/user.interface';
 import { ValidateSubscriptionProprietaryGuard } from './guards/validate-subscription-proprietary.guard';
+import { UserService } from 'src/user/user.service';
+import { Role } from 'src/roles/models/role.interface';
+import { of } from 'rxjs';
 
 @Controller('subscription')
 export class SubscriptionController {
-  constructor(private readonly subscriptionService: SubscriptionService) {}
+  constructor(
+    private readonly subscriptionService: SubscriptionService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post()
   @hasRoles('user')
@@ -46,12 +52,17 @@ export class SubscriptionController {
     console.log(validSubscription.periodicity);
     return this.subscriptionService.create(validSubscription);
   }
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
-  findAll(@Request() req) {
+  async findAll(@Request() req) {
     const tokenUser: User = req.user.user;
-    console.log(tokenUser);
+    const user: User = await this.userService
+      .findOne(tokenUser.userid)
+      .toPromise();
+    if (user.role.some((role: Role) => role.name === 'admin')) {
+      return this.subscriptionService.findAll();
+    }
     return this.subscriptionService.findAllForUser(tokenUser);
   }
 
@@ -59,7 +70,7 @@ export class SubscriptionController {
   findOne(@Param('id') id: string) {
     return this.subscriptionService.findOne(+id);
   }
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(
     JwtAuthGuard,
     RolesGuard,
@@ -76,7 +87,7 @@ export class SubscriptionController {
       updateSubscriptionDto,
     );
   }
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @Delete(':subscriptionplanid')
   @UseGuards(JwtAuthGuard, RolesGuard, CheckSubscriptionGuard)
   remove(@Param('subscriptionplanid', ParseIntPipe) id: number) {

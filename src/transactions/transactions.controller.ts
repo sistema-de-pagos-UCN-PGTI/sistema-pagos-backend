@@ -22,10 +22,17 @@ import { ValidTransactionsReferencesDto } from './dto/valid-transactions-referen
 import { TestInterceptor } from './interceptors/test.interceptor';
 import { ValidateTransactionReferencesGuard } from './guards/ValidateReference.guard';
 import { ValidReferencesDto } from './dto/valid-references.dto';
+import { ValidateTransactionProprietaryGuard } from './guards/validate-transaction-propertary.guard';
+import { User } from 'src/user/models/user.interface';
+import { UserService } from 'src/user/user.service';
+import { Role } from 'src/roles/models/role.interface';
 
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post()
   @hasRoles('user')
@@ -47,12 +54,25 @@ export class TransactionsController {
   }
 
   @Get()
-  @hasRoles('user')
+  @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  findAll(@Req() req: Request) {
+  async findAll(@Req() req) {
+    const tokenUser: User = req.user.user;
+    const user: User = await this.userService
+      .findOne(tokenUser.userid)
+      .toPromise();
+    if (user.role.some((role: Role) => role.name === 'admin')) {
+      return this.transactionsService.finAll();
+    }
     const bearerToken: string = req.headers['authorization'];
     const token = bearerToken.split('Bearer')[1].trim();
     return this.transactionsService.findAllUserTransactions(token);
+  }
+  @hasRoles('user', 'admin')
+  @Delete(':transactionId')
+  @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
+  remove(@Param('transactionId', ParseIntPipe) transactionId: number) {
+    return this.transactionsService.remove(+transactionId);
   }
   //---------------------------
   @Get('test')
@@ -68,11 +88,5 @@ export class TransactionsController {
     @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
     return this.transactionsService.update(+id, updateTransactionDto);
-  }
-  @hasRoles('user', 'admin')
-  @Delete(':transactionId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  remove(@Param('transactionId', ParseIntPipe) transactionId: number) {
-    return this.transactionsService.remove(+transactionId);
   }
 }
