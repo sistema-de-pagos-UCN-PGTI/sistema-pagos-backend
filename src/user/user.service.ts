@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindOptionsUtils, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './models/user.interface';
 import { Users } from './models/user.entity';
@@ -122,12 +122,12 @@ export class UserService {
                     return this.authService.hashPassword(changePasswordInput.newPassword).pipe(
                         switchMap((passwordHash: string) => {
                             user.hashedpassword = passwordHash;
+                            delete user.role;
                             //update and return a succes message
-                            return from(this.userRepository.update(user2.userid, user)).pipe(
-                                map(() => {
-                                    return {message: 'password updated'};
-                                })
-                            )
+                            return from(this.userRepository.update({userid: user2.userid}, user)).pipe(
+                              map(() => ({message: 'password updated'})),
+                              catchError((error) => throwError(() => new Error(error))),
+                            );
                         })
                     )
                 } else {
