@@ -89,14 +89,25 @@ export class SubscriptionController {
     ValidateSubscriptionProprietaryGuard,
   )
   @Patch(':subscriptionplanid')
-  update(
+  async update(
     @Request() req,
     @Param('subscriptionplanid', ParseIntPipe) subscriptionplanid: number,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
   ) {
-    const tokenUser: User = req.user.user;
+    const bearerToken: string = req.headers['authorization'];
+    const token = bearerToken.split('Bearer')[1].trim();
+
+    const user: User = await firstValueFrom(
+      this.userService.decodeToken(token).pipe(
+      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
+      map((user: User) => {
+        return user;
+      }),
+      ),
+    );
+    
     return this.subscriptionService.update(
-      tokenUser.userid,
+      user.userid,
       +subscriptionplanid,
       updateSubscriptionDto,
     );
