@@ -25,7 +25,7 @@ import { User } from 'src/user/models/user.interface';
 import { ValidateSubscriptionProprietaryGuard } from './guards/validate-subscription-proprietary.guard';
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, map, of, switchMap } from 'rxjs';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -57,17 +57,24 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   async findAll(@Req() req) {
-    const tokenUser: User = req.user.user;
+    const bearerToken: string = req.headers['authorization'];
+    const token = bearerToken.split('Bearer')[1].trim();
 
     const user: User = await firstValueFrom(
-      this.userService.findOne(tokenUser.userid),
+      this.userService.decodeToken(token).pipe(
+      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
+      map((user: User) => {
+        return user;
+      }),
+      ),
     );
+
 
     if (user.role.some((role: Role) => role.name === 'admin')) {
       return this.subscriptionService.findAll();
     }
 
-    return this.subscriptionService.findAllForUser(tokenUser);
+    return this.subscriptionService.findAllForUser(user);
   }
 
   @Get(':id')
