@@ -26,7 +26,7 @@ import { ValidateTransactionProprietaryGuard } from './guards/validate-transacti
 import { User } from 'src/user/models/user.interface';
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, from, map, switchMap } from 'rxjs';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -57,18 +57,24 @@ export class TransactionsController {
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async findAll(@Req() req) {
-    const tokenUser: User = req.user.user;
+    
+    const bearerToken: string = req.headers['authorization'];
+    const token = bearerToken.split('Bearer')[1].trim();
 
     const user: User = await firstValueFrom(
-      this.userService.findOne(tokenUser.userid),
+      this.userService.decodeToken(token).pipe(
+      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
+      map((user: User) => {
+        return user;
+      }),
+      ),
     );
 
     if (user.role.some((role: Role) => role.name === 'admin')) {
       return this.transactionsService.finAll();
     }
 
-    const bearerToken: string = req.headers['authorization'];
-    const token = bearerToken.split('Bearer')[1].trim();
+    
 
     return this.transactionsService.findAllUserTransactions(token);
   }
