@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './models/user.interface';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -51,17 +51,29 @@ export class UserController {
 
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Get(':userid')
-  findOne(@Param() params): Observable<User> {
-    return this.userService.findOne(params.userid);
+  @Get('')
+  async findOne(@Req() req, @Param() params): Promise<Observable<User>> {
+    const bearerToken: string = req.headers['authorization'];
+    const token = bearerToken.split('Bearer')[1].trim();
+
+    const user: User = await firstValueFrom(
+      this.userService.decodeToken(token).pipe(
+      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
+      map((user: User) => {
+        return user;
+      }),
+      ),
+    );
+
+    return this.userService.findOne(user.userid);
   }
 
-  @hasRoles('admin')
+  /*@hasRoles('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   findAll(): Observable<User[]> {
     return this.userService.findAll();
-  }
+  }*/
 
   @hasRoles('admin')
   @Delete(':userid')
@@ -72,13 +84,25 @@ export class UserController {
   //@hasRoles('admin', 'user')
   //@UseGuards(JwtAuthGuard, RolesGuard)
   //TODO CAMBIAR USERID POR URL A EXTRAER DE TOKEN
-  @Put('password/:userid')
-  updatePassword(
-    @Param('userid') userid: string,
+  @Put('password')
+  async updatePassword(
+    @Req() req,
     @Body() changePasswordInput: ChangePassword,
-  ): Observable<Object> {
+  ): Promise<Observable<Object>> {
+    const bearerToken: string = req.headers['authorization'];
+    const token = bearerToken.split('Bearer')[1].trim();
+
+    const user2: User = await firstValueFrom(
+      this.userService.decodeToken(token).pipe(
+      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
+      map((user: User) => {
+        return user;
+      }),
+      ),
+    );
+    
     return this.userService
-      .updatePassword(Number(userid), changePasswordInput)
+      .updatePassword(user2, changePasswordInput)
       .pipe(
         map((res: Object) => {
           return res;

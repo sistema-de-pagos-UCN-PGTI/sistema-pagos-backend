@@ -115,15 +115,15 @@ export class UserService {
     }
 
     //update password, validate that the password is correct and update it
-    updatePassword(id: number, changePasswordInput: ChangePassword): Observable<object> {
-        return this.validateUser(changePasswordInput.email, changePasswordInput.oldPassword).pipe(
+    updatePassword(user2: User, changePasswordInput: ChangePassword): Observable<object> {
+        return this.validateUser(user2.email, changePasswordInput.oldPassword).pipe(
             switchMap((user: User) => {
                 if(user) {
                     return this.authService.hashPassword(changePasswordInput.newPassword).pipe(
                         switchMap((passwordHash: string) => {
                             user.hashedpassword = passwordHash;
                             //update and return a succes message
-                            return from(this.userRepository.update(id, user)).pipe(
+                            return from(this.userRepository.update(user2.userid, user)).pipe(
                                 map(() => {
                                     return {message: 'password updated'};
                                 })
