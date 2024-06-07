@@ -63,7 +63,7 @@ export class SubscriptionService {
     );
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async handleCron() {
     try {  
       const limit = pLimit(3);
