@@ -5,7 +5,7 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { User } from 'src/user/models/user.interface';
 import { SubscriptionService } from '../subscription.service';
 import { Role } from 'src/roles/models/role.interface';
@@ -17,43 +17,54 @@ export class ValidateSubscriptionProprietaryGuard implements CanActivate {
     private subscriptionService: SubscriptionService,
     private userService: UserService,
   ) {}
-  canActivate(
+  async canActivate(
     context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  ): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
-    const tokenUser: User = req.user.user;
+    const authHeader = req.headers.authorization;
+    //const tokenUser: User = req.user.user;
     const subscriptionplanid: number = +req.params.subscriptionplanid;
 
-    return this.userService.findOne(tokenUser.userid).pipe(
-      switchMap((user) => {
-        if (!user) {
-          throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-        }
+    if (!authHeader) {
+      return false;
+    }
 
-        if (user.role.some((role: Role) => role.name === 'admin')) {
-          return of(true);
-        }
+    const token = authHeader.split(' ')[1];
+    let tokenUser: User;
+    try {
+      tokenUser = await firstValueFrom(
+        this.userService.decodeToken(token).pipe(
+          switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
+          map((user: User) => user),
+        ),
+      );
+    } catch (error) {
+      throw new HttpException('Token decoding or user fetch failed', HttpStatus.UNAUTHORIZED);
+    }
 
-        return this.subscriptionService.findOne(subscriptionplanid).pipe(
-          switchMap((subscription) => {
-            if (!subscription) {
-              throw new HttpException(
-                'Transaction not found',
-                HttpStatus.NOT_FOUND,
-              );
-            }
+    const user = await firstValueFrom(this.userService.findOne(tokenUser.userid));
+    
+    if (!user) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
 
-            if (subscription.remittent.userid !== user.userid) {
-              throw new HttpException(
-                'Invalid Action, subscription doesn’t belong to the logged user',
-                HttpStatus.BAD_REQUEST,
-              );
-            }
+    if (user.role.some((role: Role) => role.name === 'admin')) {
+      return true;
+    }
 
-            return of(true);
-          }),
-        );
-      }),
-    );
+    const subscription = await firstValueFrom(this.subscriptionService.findOne(subscriptionplanid));
+    
+    if (!subscription) {
+      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (subscription.remittent.userid !== user.userid) {
+      throw new HttpException(
+        'Invalid Action, subscription doesn’t belong to the logged user',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return true;
   }
 }
