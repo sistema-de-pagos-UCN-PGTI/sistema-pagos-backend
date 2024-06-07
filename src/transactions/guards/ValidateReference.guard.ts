@@ -38,7 +38,7 @@ export class ValidateTransactionReferencesGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!createTransaction) {
-      return true; // Allow the request to proceed if there's no transaction data
+      return true; 
     }
 
     if (!authHeader) {
