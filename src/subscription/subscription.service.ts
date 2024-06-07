@@ -13,6 +13,7 @@ import { ValidTransactionsReferencesDto } from 'src/transactions/dto/valid-trans
 import {
   Observable,
   catchError,
+  firstValueFrom,
   from,
   map,
   mergeMap,
@@ -22,6 +23,7 @@ import {
 import { ValidSubscriptionReferencesDto } from './dto/valid-references.dto';
 import { User } from 'src/user/models/user.interface';
 import { UserService } from 'src/user/user.service';
+const pLimit = require('p-limit');
 
 @Injectable()
 export class SubscriptionService {
@@ -60,99 +62,131 @@ export class SubscriptionService {
       }),
     );
   }
-  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleCron() {
-    await this.handleSubscriptionTransactions();
+    try {  
+      const limit = pLimit(3);
+      await firstValueFrom(this.handleSubscriptionTransactions(limit));
+      console.log("Cron job completed successfully.");
+    } catch (error) {
+      console.error("Error in cron job:", error);
+    }
   }
-  private handleSubscriptionTransactions(): Observable<void> {
+  
+  private handleSubscriptionTransactions(limit): Observable<void> {
+    console.log("Automatic subscription transactions processing.");
     return from(
       this.subscriptionRepository.find({
-        where: { status: 'vigente' },
+        where: { status: "vigente" },
         relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
-      }),
+      })
     ).pipe(
       switchMap((activeSubscriptions) => {
+        if (activeSubscriptions.length === 0) {
+          console.log("No active subscriptions found.");
+          return from([]);
+        }
+
         const now = new Date();
-        return from(activeSubscriptions).pipe(
-          mergeMap((sub) => {
-            const {
-              subscriptionplanid,
-              periodicity,
-              startdate,
-              amount,
-              remittent,
-              destinatary,
-              project,
-              paymentmethod,
-              lastpaydate,
-            } = sub;
-            const newTransaction: ValidTransactionsReferencesDto = {
-              description: `Subscription transaction for ${subscriptionplanid}`,
-              amount: amount,
-              date: now,
-              status: 'completed',
-              remittentUser: remittent,
-              destinataryUser: destinatary,
-              project,
-              paymenMethod: paymentmethod,
-            };
-            if (!lastpaydate) {
-              return this.transactionService.create(newTransaction).pipe(
-                switchMap(() => {
-                  sub.lastpaydate = now;
-                  return from(this.subscriptionRepository.save(sub));
-                }),
-                map(() => undefined),
-              );
-            }
-            let soonTransactionDate = new Date(lastpaydate);
 
-            switch (periodicity) {
-              case 'daily':
-                soonTransactionDate.setDate(soonTransactionDate.getDate() + 1);
-                break;
-              case 'weekly':
-                soonTransactionDate.setDate(soonTransactionDate.getDate() + 7);
-                break;
-              case 'monthly':
-                soonTransactionDate.setMonth(
-                  soonTransactionDate.getMonth() + 1,
-                );
-                break;
-              case 'quarterly':
-                soonTransactionDate.setMonth(
-                  soonTransactionDate.getMonth() + 4,
-                );
-                break;
-              case 'semiannual':
-                soonTransactionDate.setMonth(
-                  soonTransactionDate.getMonth() + 6,
-                );
-                break;
-              case 'yearly':
-                soonTransactionDate.setFullYear(
-                  soonTransactionDate.getFullYear() + 1,
-                );
-                break;
-            }
+        const subscriptionPromises = activeSubscriptions.map((sub) =>
+          limit(() => this.processSubscription(sub, now))
+        );
 
-            if (now >= soonTransactionDate) {
-              return this.transactionService.create(newTransaction).pipe(
-                switchMap(() => {
-                  sub.lastpaydate = now;
-                  return from(this.subscriptionRepository.save(sub));
-                }),
-                map(() => undefined),
-              );
-            } else {
-              return from([]);
-            }
+        return from(Promise.all(subscriptionPromises)).pipe(
+          map(() => {
+            console.log("Finalizando manejo de suscripciones.");
+            return undefined;
           }),
+          catchError(err => {
+            console.error("Error in handleSubscriptionTransactions:", err);
+            return from([]);
+          })
         );
       }),
-      map(() => undefined),
+      catchError(err => {
+        console.error("Error in finding subscriptions:", err);
+        return from([]);
+      })
     );
   }
+
+  private async processSubscription(sub, now): Promise<void> {
+    const {
+      subscriptionplanid,
+      periodicity,
+      amount,
+      remittent,
+      destinatary,
+      project,
+      paymentmethod,
+      lastpaydate,
+    } = sub;
+
+    const newTransaction: ValidTransactionsReferencesDto = {
+      description: `Subscription transaction for ${sub.description}`,
+      amount: amount,
+      date: now,
+      status: 'completed',
+      remittentUser: remittent,
+      destinataryUser: destinatary,
+      project,
+      paymenMethod: paymentmethod,
+    };
+
+    if (!lastpaydate) {
+      console.log("First payment for subscription:", subscriptionplanid);
+      return firstValueFrom(this.transactionService.create(newTransaction)).then(() => {
+        sub.lastpaydate = now;
+        return this.subscriptionRepository.save(sub);
+      }).then(() => {
+        console.log("New transaction created and subscription updated.");
+      }).catch(err => {
+        console.error("Error in creating new transaction:", err);
+      });
+    }
+
+    let soonTransactionDate = new Date(lastpaydate);
+    switch (periodicity) {
+      case 'daily':
+        soonTransactionDate.setDate(soonTransactionDate.getDate() + 1);
+        break;
+      case 'weekly':
+        soonTransactionDate.setDate(soonTransactionDate.getDate() + 7);
+        break;
+      case 'monthly':
+        soonTransactionDate.setMonth(soonTransactionDate.getMonth() + 1);
+        break;
+      case 'quarterly':
+        soonTransactionDate.setMonth(soonTransactionDate.getMonth() + 4);
+        break;
+      case 'semiannual':
+        soonTransactionDate.setMonth(soonTransactionDate.getMonth() + 6);
+        break;
+      case 'yearly':
+        soonTransactionDate.setFullYear(soonTransactionDate.getFullYear() + 1);
+        break;
+    }
+
+    if (now >= soonTransactionDate) {
+      console.log("Creating transaction for subscription:", subscriptionplanid);
+      return firstValueFrom(this.transactionService.create(newTransaction)).then(() => {
+        sub.lastpaydate = now;
+        return this.subscriptionRepository.save(sub);
+      }).then(() => {
+        console.log("Transaction processed and subscription updated.");
+      }).catch(err => {
+        console.error("Error in processing transaction:", err);
+      });
+    } else {
+      console.log("No transaction needed at this time for subscription:", subscriptionplanid);
+      return Promise.resolve();
+    }
+  }
+
+
+
   async findAll() {
     const subscriptions = await this.subscriptionRepository.find({
       relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
