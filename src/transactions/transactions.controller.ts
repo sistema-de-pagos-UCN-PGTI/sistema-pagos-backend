@@ -85,12 +85,6 @@ export class TransactionsController {
     return this.transactionsService.remove(+transactionId);
   }
   //---------------------------
-  @Get('test')
-  @UseInterceptors(TestInterceptor)
-  findOne(@Body() body) {
-    console.log(body, 'en controlador');
-    return;
-  }
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
   @Patch(':transactionId')
@@ -106,4 +100,10 @@ export class TransactionsController {
       updateTransactionDto,
     );
   }
+  @Get(':id')   @hasRoles('user', 'admin')
+  findOne(@Param('id', ParseIntPipe) id: number) {     
+    return this.transactionsService.findOne(id);   
+  }
 }
+
+  
