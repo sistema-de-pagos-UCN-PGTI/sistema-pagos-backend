@@ -11,6 +11,7 @@ import {
 import { Roles } from '../../roles/models/role.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
 import { SubscriptionPlan } from 'src/subscription/entities/subcriptionPlans.entity';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Entity()
 export class Users {
@@ -57,6 +58,14 @@ export class Users {
     (subscriptionPlan) => subscriptionPlan.destinatary,
   )
   receivedSubscription: SubscriptionPlan[];
+
+  @ManyToMany(() => Project)
+  @JoinTable({
+    name: 'users_projects',
+    joinColumn: { name: 'userid', referencedColumnName: 'userid' },
+    inverseJoinColumn: { name: 'projectid', referencedColumnName: 'projectid' },
+  })
+  projects: Project[];
 
   @BeforeInsert()
   emailToLowerCase() {

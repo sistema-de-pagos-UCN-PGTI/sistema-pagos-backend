@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
 import { Observable } from 'rxjs';
@@ -7,6 +7,7 @@ import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UserWithTransactionCount } from './userWithTransactionCount.interface';
+import { Project } from './project.interface';
 
 @Controller('dashboard')
 export class DashboardController {
@@ -29,15 +30,15 @@ export class DashboardController {
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTotalAmount')
-    getTotalAmount(): Observable<number>{
-        return this.dashboardService.getTotalAmount();
+    getTotalAmount(@Body() project: Project): Observable<number>{
+        return this.dashboardService.getTotalAmount(Number(project.projectid));
     }
 
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Get('getTopUsers')
-    getTopUsers(): Observable<UserWithTransactionCount[]>{
-        return this.dashboardService.getTopUsers();
+    getTopUsers(@Body() project: Project): Observable<UserWithTransactionCount[]>{
+        return this.dashboardService.getTopUsers(Number(project.projectid));
     }
 
     @hasRoles('admin')
