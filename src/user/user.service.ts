@@ -39,7 +39,7 @@ export class UserService {
     return from(
       this.userRepository.findOne({
         where: { userid: userid },
-        relations: ['role'],
+        relations: ['role', 'projects'],
       }),
     ).pipe(
       map((user: Users) => {

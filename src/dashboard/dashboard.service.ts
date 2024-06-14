@@ -18,38 +18,48 @@ export class DashboardService {
         return from(this.transactionRepository.find({
             order: {
                 date: 'DESC',
-            }
-        }));
+            },
+            relations: ['remittent', 'destinatary', 'project', 'paymentMethod'],
+            take: 5,
+        })).pipe(
+            map((transactions) => transactions.map((transaction) => {
+                delete transaction.remittent.hashedpassword;
+                delete transaction.destinatary.hashedpassword;
+                return transaction;
+            }))
+        );
     }
 
     getAllUsers(): Observable<User[]> {
         return from(this.userService.findAll());
     }
 
-    getTotalAmount(): Observable<number> {
+    getTotalAmount(projectid: Number): Observable<number> {
         return from(this.transactionRepository
             .createQueryBuilder('transaction')
-            .select('SUM(transaction.amount)', 'total')
+            .select('SUM(transaction.amount)', 'total')         
             .where('EXTRACT(MONTH FROM transaction.date) = EXTRACT(MONTH FROM CURRENT_DATE)')
+            .andWhere('transaction.projectid = :projectid', { projectid })
             .getRawOne())
             .pipe(
                 map((result) => result.total)
             );
     }
 
-    getTopUsers(): Observable<UserWithTransactionCount[]> {
+    getTopUsers(projectid: Number): Observable<UserWithTransactionCount[]> {
         return from(this.transactionRepository
             .createQueryBuilder('transaction')
-            .select('transaction.destinataryid')
-            .addSelect('COUNT(transaction.destinataryid)', 'total')
-            .groupBy('transaction.destinataryid')
+            .select('transaction.remittentid')
+            .addSelect('COUNT(transaction.remittentid)', 'total')
+            .where('transaction.projectid = :projectid', { projectid })
+            .groupBy('transaction.remittentid')
             .orderBy('total', 'DESC')
-            .limit(5)
+            .limit(3)
             .getRawMany())
             .pipe(
                 switchMap((result) => {
                     const userObservables = result.map((item) => 
-                        this.userService.findOne(item.destinataryid).pipe(
+                        this.userService.findOne(item.remittentid).pipe(
                             map(user => ({
                                 user,
                                 total: parseInt(item.total, 10)
@@ -121,14 +131,17 @@ export class DashboardService {
             );
     }
 
-    //get count of transactions per day in the current month
+    //get count of transactions per day in the current month per project
     getTransactionCountPerDay(): Observable<any> {
         return from(this.transactionRepository
             .createQueryBuilder('transaction')
             .select('EXTRACT(DAY FROM transaction.date)', 'day')
             .addSelect('COUNT(transaction.transactionid)', 'total')
+            .addSelect('transaction.projectid')
+            .addSelect('project.name')
+            .innerJoin('projects', 'project', 'transaction.projectid = project.projectid')
             .where('EXTRACT(MONTH FROM transaction.date) = EXTRACT(MONTH FROM CURRENT_DATE)')
-            .groupBy('day')
+            .groupBy('day, transaction.projectid, project.name')
             .orderBy('day')
             .getRawMany());
     }
