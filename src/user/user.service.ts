@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './models/user.interface';
 import { Users } from './models/user.entity';
 import { Observable, catchError, find, from, map, switchMap, throwError } from 'rxjs';
-import { AuthService } from 'src/auth/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { ChangePassword } from './models/changePassword.interface';
 
 @Injectable()
@@ -108,46 +108,46 @@ export class UserService {
     );
   }
 
-    findByEmail(email: string): Observable<User> {
-        return from(this.userRepository.findOne({
-          where: {email: email},
-          relations: ['role'],}));
-    }
+  findByEmail(email: string): Observable<User> {
+      return from(this.userRepository.findOne({
+        where: {email: email},
+        relations: ['role'],}));
+  }
 
-    //update password, validate that the password is correct and update it
-    updatePassword(user2: User, changePasswordInput: ChangePassword): Observable<object> {
-        return this.validateUser(user2.email, changePasswordInput.oldPassword).pipe(
-            switchMap((user: User) => {
-                if(user) {
-                    return this.authService.hashPassword(changePasswordInput.newPassword).pipe(
-                        switchMap((passwordHash: string) => {
-                            user.hashedpassword = passwordHash;
-                            delete user.role;
-                            //update and return a succes message
-                            return from(this.userRepository.update({userid: user2.userid}, user)).pipe(
-                              map(() => ({message: 'password updated'})),
-                              catchError((error) => throwError(() => new Error(error))),
-                            );
-                        })
-                    )
-                } else {
-                    throw Error;
-                }
-            })
-        )
-    }
+  //update password, validate that the password is correct and update it
+  updatePassword(user2: User, changePasswordInput: ChangePassword): Observable<object> {
+      return this.validateUser(user2.email, changePasswordInput.oldPassword).pipe(
+          switchMap((user: User) => {
+              if(user) {
+                  return this.authService.hashPassword(changePasswordInput.newPassword).pipe(
+                      switchMap((passwordHash: string) => {
+                          user.hashedpassword = passwordHash;
+                          delete user.role;
+                          //update and return a succes message
+                          return from(this.userRepository.update({userid: user2.userid}, user)).pipe(
+                            map(() => ({message: 'password updated'})),
+                            catchError((error) => throwError(() => new Error(error))),
+                          );
+                      })
+                  )
+              } else {
+                  throw Error;
+              }
+          })
+      )
+  }
 
-    decodeToken(token: string): Observable<any> {
-        return this.authService.decodeJWT(token);
-    }
+  decodeToken(token: string): Observable<any> {
+      return this.authService.decodeJWT(token);
+  }
 
-    getRole(token: string): Observable<string> {
-        return this.decodeToken(token).pipe(
-            switchMap((decoded: any) => this.findByEmail(decoded.email)),
-            map((user: User) => {
-                return user.role[0].name;
-            })
-        )
-    }
+  getRole(token: string): Observable<string> {
+      return this.decodeToken(token).pipe(
+          switchMap((decoded: any) => this.findByEmail(decoded.email)),
+          map((user: User) => {
+              return user.role[0].name;
+          })
+      )
+  }
 
 }

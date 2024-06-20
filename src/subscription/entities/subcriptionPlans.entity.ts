@@ -1,4 +1,4 @@
-import { Users } from 'src/user/models/user.entity';
+import { Users } from '../../user/models/user.entity';
 import {
   Column,
   Entity,
@@ -7,9 +7,9 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from 'src/user/models/user.interface';
-import { Project } from 'src/projects/entities/project.entity';
-import { PaymentMethod } from 'src/payment-method/entities/paymentMethod.entity';
+import { User } from '../../user/models/user.interface';
+import { Project } from '../../projects/entities/project.entity';
+import { PaymentMethod } from '../../payment-method/entities/paymentMethod.entity';
 
 @Entity('subscription_plans')
 export class SubscriptionPlan {
