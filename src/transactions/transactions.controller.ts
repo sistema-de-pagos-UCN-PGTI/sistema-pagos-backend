@@ -57,25 +57,23 @@ export class TransactionsController {
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async findAll(@Req() req) {
-    
     const bearerToken: string = req.headers['authorization'];
     const token = bearerToken.split('Bearer')[1].trim();
 
     const user: User = await firstValueFrom(
       this.userService.decodeToken(token).pipe(
-      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
-      map((user: User) => {
-        return user;
-      }),
+        switchMap((decoded: any) =>
+          this.userService.findByEmail(decoded.email),
+        ),
+        map((user: User) => {
+          return user;
+        }),
       ),
     );
 
     if (user.role.some((role: Role) => role.name === 'admin')) {
       return this.transactionsService.finAll();
     }
-
-    
-
     return this.transactionsService.findAllUserTransactions(token);
   }
   @hasRoles('user', 'admin')
