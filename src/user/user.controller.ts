@@ -12,9 +12,9 @@ import {
 import { UserService } from './user.service';
 import { User } from './models/user.interface';
 import { Observable, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
-import { hasRoles } from 'src/auth/decorator/roles.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { hasRoles } from '../auth/decorator/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChangePassword } from './models/changePassword.interface';
 
 @Controller('user')
@@ -83,7 +83,6 @@ export class UserController {
 
   //@hasRoles('admin', 'user')
   //@UseGuards(JwtAuthGuard, RolesGuard)
-  //TODO CAMBIAR USERID POR URL A EXTRAER DE TOKEN
   @Put('password')
   async updatePassword(
     @Req() req,

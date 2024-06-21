@@ -20,6 +20,7 @@ import { CheckSubscriptionGuard } from './guards/check-subscription.guard';
   ],
   controllers: [SubscriptionController],
   providers: [SubscriptionService, CheckSubscriptionGuard],
+  exports: [SubscriptionService],
 })
 export class SubscriptionModule {}
 //TODO -> reparar problema sobre las validaciones de los dto(repeticióin de código)

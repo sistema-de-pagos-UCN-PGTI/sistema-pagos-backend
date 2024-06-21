@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
 import { Observable } from 'rxjs';
@@ -15,28 +15,28 @@ export class DashboardController {
 
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('getRecentPayments')
-    getRecentPayments(): Observable<Transaction[]>{
-        return this.dashboardService.getRecentPayments();
+    @Post('getRecentPayments')
+    getRecentPayments(@Body() project: Project): Observable<Transaction[]>{
+        return this.dashboardService.getRecentPayments(Number(project.projectid));
     }
 
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('getAllUsers')
-    getAllUsers(): Observable<User[]>{
-        return this.dashboardService.getAllUsers();
+    @Post('getAllUsers')
+    getAllUsers(@Body() project: Project): Observable<User[]>{
+        return this.dashboardService.getAllUsers(Number(project.projectid));
     }
 
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('getTotalAmount')
+    @Post('getTotalAmount')
     getTotalAmount(@Body() project: Project): Observable<number>{
         return this.dashboardService.getTotalAmount(Number(project.projectid));
     }
 
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('getTopUsers')
+    @Post('getTopUsers')
     getTopUsers(@Body() project: Project): Observable<UserWithTransactionCount[]>{
         return this.dashboardService.getTopUsers(Number(project.projectid));
     }
@@ -57,8 +57,30 @@ export class DashboardController {
 
     @hasRoles('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('getTransactionCountPerDay')
-    getTransactionCountPerDay(): Observable<any>{
-        return this.dashboardService.getTransactionCountPerDay();
+    @Post('getTransactionCountPerDay')
+    getTransactionCountPerDay(@Body() project: Project): Observable<any>{
+        return this.dashboardService.getTransactionCountPerDay(Number(project.projectid));
     }
+
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('transactionsperproject')
+    getTransactionsPerProject(@Body() project: Project): Observable<any>{
+        return this.dashboardService.getTransactionsPerProject(Number(project.projectid));
+    }
+
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('getUserofProject')
+    getUserofProject(@Body() project: Project): Observable<any>{
+        return this.dashboardService.getUserofProject(Number(project.projectid));
+    }
+
+    @hasRoles('admin')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('getSubscriptionsPerProject')
+    getSubscriptionsPerProject(@Body() project: Project): Observable<any>{
+        return this.dashboardService.getSubscriptionsPerProject(Number(project.projectid));
+    }
+
 }

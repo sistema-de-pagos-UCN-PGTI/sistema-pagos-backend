@@ -19,22 +19,4 @@ export class PaymentMethodService {
       }),
     );
   }
-  create(createPaymentMethodDto: CreatePaymentMethodDto) {
-    return 'This action create a PaymentMethod';
-  }
-  findAll() {
-    return `This action returns all paymentMethod`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} paymentMethod`;
-  }
-
-  update(id: number, updatePaymentMethodDto: UpdatePaymentMethodDto) {
-    return `This action updates a #${id} paymentMethod`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} paymentMethod`;
-  }
 }

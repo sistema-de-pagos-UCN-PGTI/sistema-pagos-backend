@@ -1,4 +1,4 @@
-import { Roles } from "src/roles/models/role.entity";
+import { Roles } from "../../roles/models/role.entity";
 
 
 export interface User {
