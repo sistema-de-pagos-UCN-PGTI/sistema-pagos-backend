@@ -287,6 +287,28 @@ export class SubscriptionService {
   remove(subscriptionplanid: number) {
     return from(this.subscriptionRepository.delete({ subscriptionplanid }));
   }
+
+  findSubscriptionsByProject(projectid: number) {
+    return from(
+      this.subscriptionRepository.find({
+        where: { project: { projectid } },
+        relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
+      }),
+    ).pipe(
+      map((subscriptions) => {
+        return subscriptions.map((subscription) => {
+          const { remittent, destinatary, ...rest } = subscription;
+          if (remittent) {
+            delete remittent.hashedpassword;
+          }
+          if (destinatary) {
+            delete destinatary.hashedpassword;
+          }
+          return { ...rest, remittent, destinatary };
+        });
+      }),
+    );
+  }
 }
 
 //con promesas   private async handleSubscriptionTransactions() {

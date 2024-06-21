@@ -150,4 +150,18 @@ export class UserService {
       )
   }
 
+  findUsersByProject(projectid: number): Observable<User[]> {
+    return from(this.userRepository.find({
+      where: {projects: {projectid: projectid}},
+      relations: ['role', 'projects'],
+    })).pipe(
+      map((users: Users[]) => {
+        users.forEach(function (v) {
+          delete v.hashedpassword;
+        });
+        return users;
+      }),
+    );
+  }
+
 }
