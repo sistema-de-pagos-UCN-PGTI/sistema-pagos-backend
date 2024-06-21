@@ -65,50 +65,50 @@ export class SubscriptionService {
 
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async handleCron() {
-    try {  
+    try {
       const limit = pLimit(3);
       await firstValueFrom(this.handleSubscriptionTransactions(limit));
-      console.log("Cron job completed successfully.");
+      console.log('Cron job completed successfully.');
     } catch (error) {
-      console.error("Error in cron job:", error);
+      console.error('Error in cron job:', error);
     }
   }
-  
+
   private handleSubscriptionTransactions(limit): Observable<void> {
-    console.log("Automatic subscription transactions processing.");
+    console.log('Automatic subscription transactions processing.');
     return from(
       this.subscriptionRepository.find({
-        where: { status: "vigente" },
+        where: { status: 'vigente' },
         relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
-      })
+      }),
     ).pipe(
       switchMap((activeSubscriptions) => {
         if (activeSubscriptions.length === 0) {
-          console.log("No active subscriptions found.");
+          console.log('No active subscriptions found.');
           return from([]);
         }
 
         const now = new Date();
 
         const subscriptionPromises = activeSubscriptions.map((sub) =>
-          limit(() => this.processSubscription(sub, now))
+          limit(() => this.processSubscription(sub, now)),
         );
 
         return from(Promise.all(subscriptionPromises)).pipe(
           map(() => {
-            console.log("Finalizando manejo de suscripciones.");
+            console.log('Finalizando manejo de suscripciones.');
             return undefined;
           }),
-          catchError(err => {
-            console.error("Error in handleSubscriptionTransactions:", err);
+          catchError((err) => {
+            console.error('Error in handleSubscriptionTransactions:', err);
             return from([]);
-          })
+          }),
         );
       }),
-      catchError(err => {
-        console.error("Error in finding subscriptions:", err);
+      catchError((err) => {
+        console.error('Error in finding subscriptions:', err);
         return from([]);
-      })
+      }),
     );
   }
 
@@ -136,15 +136,18 @@ export class SubscriptionService {
     };
 
     if (!lastpaydate) {
-      console.log("First payment for subscription:", subscriptionplanid);
-      return firstValueFrom(this.transactionService.create(newTransaction)).then(() => {
-        sub.lastpaydate = now;
-        return this.subscriptionRepository.save(sub);
-      }).then(() => {
-        console.log("New transaction created and subscription updated.");
-      }).catch(err => {
-        console.error("Error in creating new transaction:", err);
-      });
+      console.log('First payment for subscription:', subscriptionplanid);
+      return firstValueFrom(this.transactionService.create(newTransaction))
+        .then(() => {
+          sub.lastpaydate = now;
+          return this.subscriptionRepository.save(sub);
+        })
+        .then(() => {
+          console.log('New transaction created and subscription updated.');
+        })
+        .catch((err) => {
+          console.error('Error in creating new transaction:', err);
+        });
     }
 
     let soonTransactionDate = new Date(lastpaydate);
@@ -170,22 +173,26 @@ export class SubscriptionService {
     }
 
     if (now >= soonTransactionDate) {
-      console.log("Creating transaction for subscription:", subscriptionplanid);
-      return firstValueFrom(this.transactionService.create(newTransaction)).then(() => {
-        sub.lastpaydate = now;
-        return this.subscriptionRepository.save(sub);
-      }).then(() => {
-        console.log("Transaction processed and subscription updated.");
-      }).catch(err => {
-        console.error("Error in processing transaction:", err);
-      });
+      console.log('Creating transaction for subscription:', subscriptionplanid);
+      return firstValueFrom(this.transactionService.create(newTransaction))
+        .then(() => {
+          sub.lastpaydate = now;
+          return this.subscriptionRepository.save(sub);
+        })
+        .then(() => {
+          console.log('Transaction processed and subscription updated.');
+        })
+        .catch((err) => {
+          console.error('Error in processing transaction:', err);
+        });
     } else {
-      console.log("No transaction needed at this time for subscription:", subscriptionplanid);
+      console.log(
+        'No transaction needed at this time for subscription:',
+        subscriptionplanid,
+      );
       return Promise.resolve();
     }
   }
-
-
 
   async findAll() {
     const subscriptions = await this.subscriptionRepository.find({
@@ -205,7 +212,7 @@ export class SubscriptionService {
   }
   async findAllForUser(user: User) {
     const subscriptions = await this.subscriptionRepository.find({
-      where: [{ remittent: user }, { destinatary: user }],
+      where: [{ remittent: user }],
       relations: ['remittent', 'destinatary', 'project', 'paymentmethod'],
     });
 
