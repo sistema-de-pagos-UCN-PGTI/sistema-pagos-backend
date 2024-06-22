@@ -50,7 +50,6 @@ export class SubscriptionController {
       project: validReferences.project,
       paymentmethod: validReferences.paymentMethod,
     };
-    console.log(validSubscription.periodicity);
     return this.subscriptionService.create(validSubscription);
   }
   @hasRoles('user', 'admin')
@@ -62,13 +61,14 @@ export class SubscriptionController {
 
     const user: User = await firstValueFrom(
       this.userService.decodeToken(token).pipe(
-      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
-      map((user: User) => {
-        return user;
-      }),
+        switchMap((decoded: any) =>
+          this.userService.findByEmail(decoded.email),
+        ),
+        map((user: User) => {
+          return user;
+        }),
       ),
     );
-
 
     if (user.role.some((role: Role) => role.name === 'admin')) {
       return this.subscriptionService.findAll();
@@ -78,7 +78,7 @@ export class SubscriptionController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.subscriptionService.findOne(+id);
   }
   @hasRoles('user', 'admin')
@@ -99,20 +99,22 @@ export class SubscriptionController {
 
     const user: User = await firstValueFrom(
       this.userService.decodeToken(token).pipe(
-      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
-      map((user: User) => {
-        return user;
-      }),
+        switchMap((decoded: any) =>
+          this.userService.findByEmail(decoded.email),
+        ),
+        map((user: User) => {
+          return user;
+        }),
       ),
     );
-    
+
     return this.subscriptionService.update(
       user.userid,
       +subscriptionplanid,
       updateSubscriptionDto,
     );
   }
-  @hasRoles('user', 'admin')
+  @hasRoles('admin')
   @Delete(':subscriptionplanid')
   @UseGuards(JwtAuthGuard, RolesGuard, CheckSubscriptionGuard)
   remove(@Param('subscriptionplanid', ParseIntPipe) id: number) {

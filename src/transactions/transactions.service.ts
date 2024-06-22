@@ -26,7 +26,6 @@ import { ProjectsService } from 'src/projects/projects.service';
 import { PaymentMethodService } from 'src/payment-method/payment-method.service';
 import { PaymentMethod } from '../payment-method/entities/paymentMethod.entity';
 import { AuthService } from 'src/auth/auth.service';
-import { UserTransactions } from './dto/user-transactions.dto';
 import { ValidTransactionsReferencesDto } from './dto/valid-transactions-references.dto';
 import { ValidReferencesDto } from './dto/valid-references.dto';
 
@@ -244,7 +243,6 @@ export class TransactionsService {
       }),
     );
   }
-
   remove(transactionid: number) {
     return from(this.transactionRepository.delete({ transactionid }));
   }
