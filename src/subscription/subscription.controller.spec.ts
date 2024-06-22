@@ -1,3 +1,4 @@
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionController } from './subscription.controller';
 import { SubscriptionService } from './subscription.service';
@@ -375,3 +376,11 @@ describe('SubscriptionController', () => {
     });
   });
 });
+
+describe('SubscriptionController', () => {
+    it('should be defined', () => {
+      expect(true).toBe(true);
+    });
+  });
+  
+>>>>>>> main

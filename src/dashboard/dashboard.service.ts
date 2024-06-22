@@ -6,16 +6,21 @@ import { User } from 'src/user/models/user.interface';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import { UserWithTransactionCount } from './userWithTransactionCount.interface';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 @Injectable()
 export class DashboardService {
     constructor(@InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
     private userService: UserService,
+    private subscriptionService: SubscriptionService,
     ) {}
 
-    getRecentPayments(): Observable<Transaction[]> {
+    getRecentPayments(projectid: number): Observable<Transaction[]> {
         return from(this.transactionRepository.find({
+            where: {
+                project: { projectid: projectid },
+            },
             order: {
                 date: 'DESC',
             },
@@ -30,8 +35,8 @@ export class DashboardService {
         );
     }
 
-    getAllUsers(): Observable<User[]> {
-        return from(this.userService.findAll());
+    getAllUsers(projectid: number): Observable<User[]> {
+        return from(this.userService.findUsersByProject(projectid));
     }
 
     getTotalAmount(projectid: Number): Observable<number> {
@@ -132,7 +137,7 @@ export class DashboardService {
     }
 
     //get count of transactions per day in the current month per project
-    getTransactionCountPerDay(): Observable<any> {
+    getTransactionCountPerDay(projectid: number): Observable<any> {
         return from(this.transactionRepository
             .createQueryBuilder('transaction')
             .select('EXTRACT(DAY FROM transaction.date)', 'day')
@@ -141,9 +146,33 @@ export class DashboardService {
             .addSelect('project.name')
             .innerJoin('projects', 'project', 'transaction.projectid = project.projectid')
             .where('EXTRACT(MONTH FROM transaction.date) = EXTRACT(MONTH FROM CURRENT_DATE)')
+            .andWhere('transaction.projectid = :projectid', { projectid })
             .groupBy('day, transaction.projectid, project.name')
             .orderBy('day')
             .getRawMany());
+    }
+
+    getTransactionsPerProject(projectid: number): Observable<any> {
+        return from(this.transactionRepository.find({
+            where: {
+                project: { projectid: projectid },
+            },
+            relations: ['remittent', 'destinatary', 'project', 'paymentMethod'],
+        })).pipe(
+            map((transactions) => transactions.map((transaction) => {
+                delete transaction.remittent.hashedpassword;
+                delete transaction.destinatary.hashedpassword;
+                return transaction;
+            })
+        ));
+    }
+
+    getUserofProject(projectid: number): Observable<any> {
+        return from(this.userService.findUsersByProject(projectid));
+    }
+
+    getSubscriptionsPerProject(projectid: number): Observable<any> {
+        return from(this.subscriptionService.findSubscriptionsByProject(projectid));
     }
     
 

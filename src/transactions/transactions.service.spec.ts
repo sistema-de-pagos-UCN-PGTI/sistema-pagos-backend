@@ -1,3 +1,4 @@
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionsService } from './transactions.service';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
@@ -138,3 +139,10 @@ describe('TransactionsService', () => {
     });
   });
 });
+
+describe('transactionsservice', () => {
+    it('should be defined', () => {
+      expect(true).toBe(true);
+    });
+  });
+

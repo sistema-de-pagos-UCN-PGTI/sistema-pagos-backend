@@ -9,9 +9,9 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { Roles } from '../../roles/models/role.entity';
-import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { SubscriptionPlan } from 'src/subscription/entities/subcriptionPlans.entity';
-import { Project } from 'src/projects/entities/project.entity';
+import { Transaction } from '../../transactions/entities/transaction.entity';
+import { SubscriptionPlan } from '../../subscription/entities/subcriptionPlans.entity';
+import { Project } from '../../projects/entities/project.entity';
 
 @Entity()
 export class Users {
@@ -65,7 +65,7 @@ export class Users {
     joinColumn: { name: 'userid', referencedColumnName: 'userid' },
     inverseJoinColumn: { name: 'projectid', referencedColumnName: 'projectid' },
   })
-  projects: Project[];
+  projects?: Project[];
 
   @BeforeInsert()
   emailToLowerCase() {

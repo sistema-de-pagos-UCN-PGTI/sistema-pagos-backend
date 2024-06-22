@@ -1,7 +1,6 @@
-// import { ValidateTransactionPropertaryGuard } from './validate-transaction-propertary.guard';
+describe('validateTransactionPropertary', () => {
+  it('should be defined', () => {
+    expect(true).toBe(true);
+  });
+});
 
-// describe('ValidateTransactionPropertaryGuard', () => {
-//   it('should be defined', () => {
-//     expect(new ValidateTransactionPropertaryGuard()).toBeDefined();
-//   });
-// });

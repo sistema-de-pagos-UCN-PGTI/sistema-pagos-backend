@@ -1,7 +1,7 @@
-import { PaymentMethod } from 'src/payment-method/entities/paymentMethod.entity';
-import { Project } from 'src/projects/entities/project.entity';
-import { Users } from 'src/user/models/user.entity';
-import { User } from 'src/user/models/user.interface';
+import { PaymentMethod } from '../../payment-method/entities/paymentMethod.entity';
+import { Project } from '../../projects/entities/project.entity';
+import { Users } from '../../user/models/user.entity';
+import { User } from '../../user/models/user.interface';
 import {
   Column,
   Entity,

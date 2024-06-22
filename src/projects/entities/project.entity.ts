@@ -1,5 +1,5 @@
-import { SubscriptionPlan } from 'src/subscription/entities/subcriptionPlans.entity';
-import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { SubscriptionPlan } from '../../subscription/entities/subcriptionPlans.entity';
+import { Transaction } from '../../transactions/entities/transaction.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('projects')
