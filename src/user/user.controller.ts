@@ -14,6 +14,7 @@ import { User } from './models/user.interface';
 import {
   Observable,
   catchError,
+  first,
   firstValueFrom,
   map,
   of,
@@ -23,12 +24,52 @@ import { hasRoles } from '../auth/decorator/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChangePassword } from './models/changePassword.interface';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 @ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
 
+  @ApiOperation({ summary: 'Create user',
+  description: 'Create a new user',
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            email: {
+              type: 'string',
+              description: 'The user email',
+              example: ''
+            },
+            rut: {
+              type: 'string',
+              description: 'The user rut',
+              example: ''
+            },
+            firstname: {
+              type: 'string',
+              description: 'The user firstname',
+              example: ''
+            },
+            lastname: {
+              type: 'string',
+              description: 'The user lastname',
+              example: ''
+            },
+            hashedPassword: {
+              type: 'string',
+              description: 'The user password',
+              example: ''
+            }
+          }
+        }
+      }
+    }
+  },
+})
+@ApiBearerAuth()
   @hasRoles('admin')
   @Post()
   create(@Body() user: User): Observable<User | Object> {
@@ -38,6 +79,30 @@ export class UserController {
     );
   }
 
+  @ApiOperation({ summary: 'Login',
+  description: 'Login to the application',
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            email: {
+              type: 'string',
+              description: 'The user email',
+              example: ''
+            },
+            hashedPassword: {
+              type: 'string',
+              description: 'The user password',
+              example: ''
+            }
+          }
+        }
+      }
+    }
+  },
+})
   @Post('login')
   login(@Body() user: User): Observable<Object> {
     return this.userService.login(user).pipe(
@@ -48,6 +113,7 @@ export class UserController {
     );
   }
 
+  @ApiBearerAuth()
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('role')
@@ -57,6 +123,7 @@ export class UserController {
     return this.userService.getRole(token);
   }
 
+  @ApiBearerAuth()
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('')
@@ -85,14 +152,42 @@ export class UserController {
     return this.userService.findAll();
   }*/
 
+  @ApiBearerAuth()
   @hasRoles('admin')
   @Delete(':userid')
   deleteOne(@Param('userid') userid: string): Observable<User> {
     return this.userService.deleteOne(Number(userid));
   }
 
-  //@hasRoles('admin', 'user')
-  //@UseGuards(JwtAuthGuard, RolesGuard)
+
+  @ApiOperation({ summary: 'Update user',
+  description: 'Update a user',
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            oldPassowrd: {
+              type: 'string',
+              description: 'The user old password',
+              example: ''
+            },
+            newPassword: {
+              type: 'string',
+              description: 'The user new password',
+              example: ''
+            },
+          }
+        }
+      }
+    }
+  },
+  }
+  )
+  @ApiBearerAuth()
+  @hasRoles('admin', 'user')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Put('password')
   async updatePassword(
     @Req() req,
