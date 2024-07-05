@@ -27,7 +27,7 @@ import { User } from 'src/user/models/user.interface';
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
 import { firstValueFrom, from, map, switchMap } from 'rxjs';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -37,7 +37,14 @@ export class TransactionsController {
     private readonly transactionsService: TransactionsService,
     private readonly userService: UserService,
   ) {}
-
+  @ApiOperation({
+    summary: 'Create Transactions',
+    description: 'Allow a token validated user to create a transaction',
+  })
+  @ApiBody({
+    description: 'The data needed to create a transaction',
+    type: CreateTransactionDto,
+  })
   @Post()
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionReferencesGuard)
@@ -55,7 +62,11 @@ export class TransactionsController {
     };
     return this.transactionsService.create(validTransaction);
   }
-
+  @ApiOperation({
+    summary: 'Get Transactions',
+    description:
+      'Return all the transactions owned by the user, in case(Admin) return all the system Transactions. This path is token based',
+  })
   @Get()
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -78,17 +89,27 @@ export class TransactionsController {
     }
     return this.transactionsService.findAllUserTransactions(token);
   }
+  @ApiOperation({
+    summary: 'Remove Transactions',
+    description:
+      'Remove the specific transaction, it only can be deleted by the owner or the admin',
+  })
   @hasRoles('user', 'admin')
   @Delete(':transactionId')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
   remove(@Param('transactionId', ParseIntPipe) transactionId: number) {
     return this.transactionsService.remove(+transactionId);
   }
+
   //---------------------------
   @ApiOperation({
     summary: 'Update a transaction',
     description:
-      'Updates the specified transaction. Note: You are allowed to update only this filds: Status, amount, date & Description ',
+      'Updates the specified transaction. Note: You are allowed to update only this fields: Status, amount, date & Description ',
+  })
+  @ApiBody({
+    description: 'The data needed to update a transaction',
+    type: UpdateTransactionDto,
   })
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
@@ -105,8 +126,14 @@ export class TransactionsController {
       updateTransactionDto,
     );
   }
+  @ApiOperation({
+    summary: 'Return transaction',
+    description:
+      'Returns the specified transaction only if it is owned by the user or the user has admin privileges.',
+  })
   @Get(':id')
   @hasRoles('user', 'admin')
+  @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.transactionsService.findOne(id);
   }
