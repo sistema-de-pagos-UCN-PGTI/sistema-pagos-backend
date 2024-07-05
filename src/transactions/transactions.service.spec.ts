@@ -18,141 +18,136 @@ import { ProjectsService } from 'src/projects/projects.service';
 import { AuthService } from 'src/auth/auth.service';
 import { DataSource } from 'typeorm';
 
-// describe('TransactionsService', () => {
-//   let transactionService: TransactionsService;
-//   let repository: Repository<Transaction>;
-//   let userService: UserService;
-//   let projectService: ProjectsService;
-//   let authService: AuthService;
+describe('TransactionsService', () => {
+  let transactionService: TransactionsService;
+  let repository: Repository<Transaction>;
+  let userService: UserService;
+  let projectService: ProjectsService;
+  let authService: AuthService;
 
-//   beforeEach(async () => {
-//     const module: TestingModule = await Test.createTestingModule({
-//       imports: [
-//         UserModule,
-//         ProjectsModule,
-//         PaymentMethodModule,
-//         AuthModule,
-//         TypeOrmModule.forFeature([Transaction]),
-//       ],
-//       providers: [
-//         TransactionsService,
-//         {
-//           provide: getRepositoryToken(Transaction),
-//           useValue: {
-//             save: jest.fn(),
-//           },
-//         },
-//         {
-//           provide: DataSource,
-//           useValue: {
-//             getRepository: jest.fn().mockReturnValue({
-//               save: jest.fn(),
-//             }),
-//           },
-//         },
-//       ],
-//     }).compile();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        UserModule,
+        ProjectsModule,
+        PaymentMethodModule,
+        AuthModule,
+        TypeOrmModule.forFeature([Transaction]),
+      ],
+      providers: [
+        TransactionsService,
+        {
+          provide: getRepositoryToken(Transaction),
+          useValue: {
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            getRepository: jest.fn().mockReturnValue({
+              save: jest.fn(),
+            }),
+          },
+        },
+      ],
+    }).compile();
 
-//     transactionService = module.get<TransactionsService>(TransactionsService);
-//     repository = module.get<Repository<Transaction>>(
-//       getRepositoryToken(Transaction),
-//     );
-//   });
+    transactionService = module.get<TransactionsService>(TransactionsService);
+    repository = module.get<Repository<Transaction>>(
+      getRepositoryToken(Transaction),
+    );
+  });
 
-//   // describe('create', () => {
-//   //   it('should create a transaction', async () => {
-//   //     const createTransactionDto: ValidTransactionsReferencesDto = {
-//   //       remittentUser: {
-//   //         userid: 1,
-//   //         email: 'remittent@example.com',
-//   //         firstname: 'John',
-//   //         lastname: 'Doe',
-//   //         hashedpassword: 'hashedpassword',
-//   //         role: [], // Otras propiedades necesarias
-//   //       },
-//   //       destinataryUser: {
-//   //         userid: 2,
-//   //         email: 'destinatary@example.com',
-//   //         firstname: 'Jane',
-//   //         lastname: 'Doe',
-//   //         hashedpassword: 'hashedpassword',
-//   //         role: [],
-//   //       },
-//   //       project: {
-//   //         projectid: 1,
-//   //         name: 'Project 1',
-//   //         transactions: [],
-//   //         subscriptionPlans: [],
-//   //       } as Project,
-//   //       paymenMethod: {
-//   //         paymentmethodid: 1,
-//   //         name: 'Credit Card',
-//   //         transactions: [],
-//   //         subscriptionPlans: [],
-//   //       } as PaymentMethod,
-//   //       description: 'Payment for services',
-//   //       amount: 1000,
-//   //       date: new Date('2023-06-01'),
-//   //       status: 'pending',
-//   //     };
+  describe('create', () => {
+    it('should create a transaction', async () => {
+      const createTransactionDto: ValidTransactionsReferencesDto = {
+        remittentUser: {
+          userid: 1,
+          email: 'remittent@example.com',
+          firstname: 'John',
+          lastname: 'Doe',
+          hashedpassword: 'hashedpassword',
+          role: [], // Otras propiedades necesarias
+        },
+        destinataryUser: {
+          userid: 2,
+          email: 'destinatary@example.com',
+          firstname: 'Jane',
+          lastname: 'Doe',
+          hashedpassword: 'hashedpassword',
+          role: [],
+        },
+        project: {
+          projectid: 1,
+          name: 'Project 1',
+          transactions: [],
+          subscriptionPlans: [],
+        } as Project,
+        paymenMethod: {
+          paymentmethodid: 1,
+          name: 'Credit Card',
+          transactions: [],
+          subscriptionPlans: [],
+        } as PaymentMethod,
+        description: 'Payment for services',
+        amount: 1000,
+        date: new Date('2023-06-01'),
+        status: 'pending',
+      };
 
-//   //     const savedTransaction: Partial<Transaction> = {
-//   //       transactionid: 1,
-//   //       description: 'Payment for services',
-//   //       amount: 1000,
-//   //       date: new Date('2023-06-01'),
-//   //       status: 'pending',
-//   //       remittent: {
-//   //         userid: 1,
-//   //         email: 'remittent@example.com',
-//   //         firstname: 'John',
-//   //         lastname: 'Doe',
-//   //       } as User,
-//   //       destinatary: {
-//   //         userid: 2,
-//   //         email: 'destinatary@example.com',
-//   //         firstname: 'Jane',
-//   //         lastname: 'Doe',
-//   //       } as User,
-//   //       project: {
-//   //         projectid: 1,
-//   //         name: 'Project 1',
-//   //         transactions: [],
-//   //         subscriptionPlans: [],
-//   //       } as Project,
-//   //       paymentMethod: {
-//   //         paymentmethodid: 1,
-//   //         name: 'Credit Card',
-//   //         transactions: [],
-//   //         subscriptionPlans: [],
-//   //       } as PaymentMethod,
-//   //     };
+      const savedTransaction: Partial<Transaction> = {
+        transactionid: 1,
+        description: 'Payment for services',
+        amount: 1000,
+        date: new Date('2023-06-01'),
+        status: 'pending',
+        remittent: {
+          userid: 1,
+          email: 'remittent@example.com',
+          firstname: 'John',
+          lastname: 'Doe',
+        } as User,
+        destinatary: {
+          userid: 2,
+          email: 'destinatary@example.com',
+          firstname: 'Jane',
+          lastname: 'Doe',
+        } as User,
+        project: {
+          projectid: 1,
+          name: 'Project 1',
+          transactions: [],
+          subscriptionPlans: [],
+        } as Project,
+        paymentMethod: {
+          paymentmethodid: 1,
+          name: 'Credit Card',
+          transactions: [],
+          subscriptionPlans: [],
+        } as PaymentMethod,
+      };
 
-//   //     jest
-//   //       .spyOn(repository, 'save')
-//   //       .mockReturnValue(Promise.resolve(savedTransaction as Transaction));
+      jest
+        .spyOn(repository, 'save')
+        .mockReturnValue(Promise.resolve(savedTransaction as Transaction));
 
-//   //     const result = await firstValueFrom(
-//   //       transactionService.create(createTransactionDto),
-//   //     );
+      const result = await firstValueFrom(
+        transactionService.create(createTransactionDto),
+      );
 
-//   //     expect(repository.save).toHaveBeenCalledWith({
-//   //       remittent: createTransactionDto.remittentUser,
-//   //       destinatary: createTransactionDto.destinataryUser,
-//   //       project: createTransactionDto.project,
-//   //       paymentMethod: createTransactionDto.paymenMethod,
-//   //       description: createTransactionDto.description,
-//   //       amount: createTransactionDto.amount,
-//   //       date: createTransactionDto.date,
-//   //       status: createTransactionDto.status,
-//   //     });
-//   //     expect(result).toEqual(savedTransaction);
-//   //   });
-//   // });
-// });
-
-describe('transactionsservice', () => {
-  it('should be defined', () => {
-    expect(true).toBe(true);
+      expect(repository.save).toHaveBeenCalledWith({
+        remittent: createTransactionDto.remittentUser,
+        destinatary: createTransactionDto.destinataryUser,
+        project: createTransactionDto.project,
+        paymentMethod: createTransactionDto.paymenMethod,
+        description: createTransactionDto.description,
+        amount: createTransactionDto.amount,
+        date: createTransactionDto.date,
+        status: createTransactionDto.status,
+      });
+      expect(result).toEqual(savedTransaction);
+    });
   });
 });
+
