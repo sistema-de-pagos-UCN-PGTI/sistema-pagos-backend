@@ -27,7 +27,10 @@ import { User } from 'src/user/models/user.interface';
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
 import { firstValueFrom, from, map, switchMap } from 'rxjs';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Transactions')
+@ApiBearerAuth()
 @Controller('transactions')
 export class TransactionsController {
   constructor(
@@ -82,6 +85,11 @@ export class TransactionsController {
     return this.transactionsService.remove(+transactionId);
   }
   //---------------------------
+  @ApiOperation({
+    summary: 'Update a transaction',
+    description:
+      'Updates the specified transaction. Note: You are allowed to update only this filds: Status, amount, date & Description ',
+  })
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
   @Patch(':transactionId')

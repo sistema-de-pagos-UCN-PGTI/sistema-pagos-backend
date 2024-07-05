@@ -26,7 +26,8 @@ import { ValidateSubscriptionProprietaryGuard } from './guards/validate-subscrip
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
 import { firstValueFrom, map, of, switchMap } from 'rxjs';
-
+import { ApiTags } from '@nestjs/swagger';
+@ApiTags('Subscription')
 @Controller('subscription')
 export class SubscriptionController {
   constructor(

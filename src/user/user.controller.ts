@@ -11,12 +11,20 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './models/user.interface';
-import { Observable, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  firstValueFrom,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
 import { hasRoles } from '../auth/decorator/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChangePassword } from './models/changePassword.interface';
-
+import { ApiTags } from '@nestjs/swagger';
+@ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
@@ -58,10 +66,12 @@ export class UserController {
 
     const user: User = await firstValueFrom(
       this.userService.decodeToken(token).pipe(
-      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
-      map((user: User) => {
-        return user;
-      }),
+        switchMap((decoded: any) =>
+          this.userService.findByEmail(decoded.email),
+        ),
+        map((user: User) => {
+          return user;
+        }),
       ),
     );
 
@@ -93,24 +103,20 @@ export class UserController {
 
     const user2: User = await firstValueFrom(
       this.userService.decodeToken(token).pipe(
-      switchMap((decoded: any) => this.userService.findByEmail(decoded.email)),
-      map((user: User) => {
-        return user;
-      }),
+        switchMap((decoded: any) =>
+          this.userService.findByEmail(decoded.email),
+        ),
+        map((user: User) => {
+          return user;
+        }),
       ),
     );
-    
-    return this.userService
-      .updatePassword(user2, changePasswordInput)
-      .pipe(
-        map((res: Object) => {
-          return res;
-        }),
-        catchError((err) => of({ error: 'Incorrect password' })),
-      );
+
+    return this.userService.updatePassword(user2, changePasswordInput).pipe(
+      map((res: Object) => {
+        return res;
+      }),
+      catchError((err) => of({ error: 'Incorrect password' })),
+    );
   }
-
-  
-
-
 }
