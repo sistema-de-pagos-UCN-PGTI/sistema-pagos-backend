@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentMethodService } from './payment-method.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentMethod } from './entities/paymentMethod.entity';
-import { Observable, from } from 'rxjs';
+import { of } from 'rxjs';
 
 describe('PaymentMethodService', () => {
   let service: PaymentMethodService;
@@ -13,7 +14,7 @@ describe('PaymentMethodService', () => {
       providers: [
         PaymentMethodService,
         {
-          provide: Repository,
+          provide: getRepositoryToken(PaymentMethod),
           useValue: {
             findOne: jest.fn(),
           },
@@ -22,7 +23,9 @@ describe('PaymentMethodService', () => {
     }).compile();
 
     service = module.get<PaymentMethodService>(PaymentMethodService);
-    repository = module.get<Repository<PaymentMethod>>(Repository);
+    repository = module.get<Repository<PaymentMethod>>(
+      getRepositoryToken(PaymentMethod),
+    );
   });
 
   it('should be defined', () => {
@@ -32,18 +35,23 @@ describe('PaymentMethodService', () => {
   describe('findOneByName', () => {
     it('should return a payment method when found', () => {
       const paymentMethodName = 'Credit Card';
-      const paymentMethod: PaymentMethod = {
-        paymentmethodid: 1,
-        name: paymentMethodName,
-        transactions: [],
-        subscriptionPlans: [],
-      };
-      jest.spyOn(repository, 'findOne').mockReturnValueOnce(Promise.resolve(paymentMethod));
-      
+      const paymentMethod = new PaymentMethod();
+      paymentMethod.paymentmethodid = 1;
+      paymentMethod.name = paymentMethodName;
+      paymentMethod.transactions = [];
+      paymentMethod.subscriptionPlans = [];
+
+      jest
+        .spyOn(repository, 'findOne')
+        .mockReturnValueOnce(Promise.resolve(paymentMethod));
+
       service.findOneByName(paymentMethodName).subscribe((result) => {
         expect(result).toBeDefined();
         expect(result).toBeInstanceOf(PaymentMethod);
-        expect(repository.findOne).toHaveBeenCalledWith({ where: { name: paymentMethodName } });
+        expect(result).toEqual(paymentMethod);
+        expect(repository.findOne).toHaveBeenCalledWith({
+          where: { name: paymentMethodName },
+        });
       });
     });
   });
