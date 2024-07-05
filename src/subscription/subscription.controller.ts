@@ -26,7 +26,9 @@ import { ValidateSubscriptionProprietaryGuard } from './guards/validate-subscrip
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/roles/models/role.interface';
 import { firstValueFrom, map, of, switchMap } from 'rxjs';
-
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+@ApiBearerAuth()
+@ApiTags('Subscription')
 @Controller('subscription')
 export class SubscriptionController {
   constructor(
@@ -34,6 +36,14 @@ export class SubscriptionController {
     private readonly userService: UserService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Create Subscription',
+    description: 'Allow a token validated user to create a Subscription',
+  })
+  @ApiBody({
+    description: 'The data needed to create a Subsription',
+    type: CreateSubscriptionDto,
+  })
   @Post()
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard, ValidateReferencesGuard)
@@ -52,6 +62,12 @@ export class SubscriptionController {
     };
     return this.subscriptionService.create(validSubscription);
   }
+
+  @ApiOperation({
+    summary: 'Get Subscriptions',
+    description:
+      'Return all the Subscriptions owned by the user, in case(Admin) return all the system Subscriptions. This path is token based',
+  })
   @hasRoles('user', 'admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
@@ -76,11 +92,32 @@ export class SubscriptionController {
 
     return this.subscriptionService.findAllForUser(user);
   }
-
+  @ApiOperation({
+    summary: 'Return subscription',
+    description:
+      'Returns the specified subscription only if it is owned by the user or the user has admin privileges.',
+  })
   @Get(':id')
+  @hasRoles('user', 'admin')
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+    CheckSubscriptionGuard,
+    ValidateSubscriptionProprietaryGuard,
+  )
   findOne(@Param('id') id: number) {
     return this.subscriptionService.findOne(+id);
   }
+
+  @ApiOperation({
+    summary: 'Update a Subscription',
+    description:
+      'Updates the specified Subscription. Note: You are allowed to update only this fields: Status, amount, date & Description ',
+  })
+  @ApiBody({
+    description: 'The data needed to update a Subscription',
+    type: UpdateSubscriptionDto,
+  })
   @hasRoles('user', 'admin')
   @UseGuards(
     JwtAuthGuard,
@@ -114,6 +151,12 @@ export class SubscriptionController {
       updateSubscriptionDto,
     );
   }
+
+  @ApiOperation({
+    summary: 'Remove Subscription',
+    description:
+      'Remove the specific Subscription, it only can be deleted by the owner or the admin',
+  })
   @hasRoles('admin')
   @Delete(':subscriptionplanid')
   @UseGuards(JwtAuthGuard, RolesGuard, CheckSubscriptionGuard)
