@@ -16,8 +16,8 @@ import { ApiTags } from '@nestjs/swagger';
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
-  // @Get()
-  // findAll() {
-  //   return this.projectsService.findAll();
-  // }
+  @Get()
+  findAll() {
+     return this.projectsService.findAll();
+   }
 }

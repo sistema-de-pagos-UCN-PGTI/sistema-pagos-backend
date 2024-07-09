@@ -157,7 +157,7 @@ export class SubscriptionController {
     description:
       'Remove the specific Subscription, it only can be deleted by the owner or the admin',
   })
-  @hasRoles('admin')
+  @hasRoles('admin', 'user')
   @Delete(':subscriptionplanid')
   @UseGuards(JwtAuthGuard, RolesGuard, CheckSubscriptionGuard)
   remove(@Param('subscriptionplanid', ParseIntPipe) id: number) {
