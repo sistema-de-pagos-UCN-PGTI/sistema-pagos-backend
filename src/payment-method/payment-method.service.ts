@@ -19,4 +19,8 @@ export class PaymentMethodService {
       }),
     );
   }
+
+  findAll(): Observable<PaymentMethod[]> {
+    return from(this.paymentMethodRepository.find());
+  }
 }
