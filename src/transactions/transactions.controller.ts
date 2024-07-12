@@ -133,7 +133,7 @@ export class TransactionsController {
   })
   @Get(':id')
   @hasRoles('user', 'admin')
-  @UseGuards(JwtAuthGuard, RolesGuard, ValidateTransactionProprietaryGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.transactionsService.findOne(id);
   }
