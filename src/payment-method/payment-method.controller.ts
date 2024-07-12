@@ -5,7 +5,9 @@ import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('payment-method')
 @Controller('payment-method')
 export class PaymentMethodController {
   constructor(private readonly paymentMethodService: PaymentMethodService) {}

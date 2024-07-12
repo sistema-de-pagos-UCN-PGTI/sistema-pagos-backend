@@ -7,7 +7,7 @@ import { SubscriptionPlan } from '../../subscription/entities/subcriptionPlans.e
 export class PaymentMethod {
   @PrimaryGeneratedColumn({ type: 'integer' })
   paymentmethodid: number;
-  @Column({ type: 'varchar', length: 16, nullable: false })
+  @Column({ type: 'varchar', length: 30, nullable: false })
   name: string;
   @OneToMany(() => Transaction, (transaction) => transaction.paymentMethod)
   transactions: Transaction[];
